@@ -17,6 +17,7 @@ private var asyncSemaphore = ThreadLocal<DispatchSemaphore?>(capturing: nil)
 public func beginAsync(_ body: @escaping () throws -> Void) rethrows {
     let beginAsyncSemaphore = DispatchSemaphore(value: 0)
     var bodyError: Error?
+    var done = false
     
     DispatchQueue.global(qos: .default).async {
         if let s = asyncSemaphore.inner.value {
@@ -31,7 +32,11 @@ public func beginAsync(_ body: @escaping () throws -> Void) rethrows {
         do {
             try body()
         } catch {
-            bodyError = error
+            if done {
+                print("beginAsync error: \(error)")
+            } else {
+                bodyError = error
+            }
         }
     }
     
@@ -39,9 +44,11 @@ public func beginAsync(_ body: @escaping () throws -> Void) rethrows {
     
     if let error = bodyError {
         // Would like to rethrow the body error here, but the compiler does not seem to allow for this.
-        print("beginAsync error: \(error)")
+        print("beginAsync initial error: \(error)")
         // throw error
     }
+    
+    done = true
 }
 
 private var asyncChain = ThreadLocal<AsyncTaskChain?>(capturing: nil)
