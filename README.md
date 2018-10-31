@@ -73,7 +73,7 @@ func suspendAsync<T>(
 ) async throws -> T
 ```
 
-#### The 'cancellation' extension is demonstrated by the following example which adds async/await to URLSessionTask:
+#### The 'cancellation' extension is demonstrated by the following example which adds async/await to URLSessionTask.dataTask:
 
 ```swift
 /// Extend URLSessionTask to be an AsyncTask
@@ -87,7 +87,7 @@ extension URLSessionTask: AsyncTask {
 }
 
 extension URLSession {
-    func asyncDataTask(with request: URLRequest) throws -> (URLRequest, URLResponse, Data) {
+    func async dataTask(with request: URLRequest) throws -> (URLRequest, URLResponse, Data) {
         return await suspendAsync { continuation, error, task in
             let dataTask = self.dataTask(with: request) { data, response, err in
                 if let err = err {
@@ -102,3 +102,29 @@ extension URLSession {
     }
 }
 ```
+
+#### This code shows 'async URLSessionTask.dataTask' in action (and is implemented as experimental code in 'main.swift'):
+
+```swift
+import Foundation
+
+let chain = beginAsyncTask {
+    let session = URLSession(configuration: .default)
+    let request = URLRequest(url: URL(string: "https://itunes.apple.com/search")!)
+    do {
+        let result = await session.dataTask(with: request)
+        if let resultString = String(data: result.2, encoding: .utf8) {
+            print("Apple search result: \(resultString)")
+        } else {
+            print("Apple search result: \(result)")
+        }
+    } catch {
+        print("Apple search error: \(error)")
+    }
+}
+
+// ...
+
+chain.cancel()
+```
+
