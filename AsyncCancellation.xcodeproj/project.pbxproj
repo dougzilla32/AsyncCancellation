@@ -8,6 +8,15 @@
 
 /* Begin PBXBuildFile section */
 		91BA1D45218949250021140D /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D44218949250021140D /* main.swift */; };
+		91BA1D52218949440021140D /* AsyncCancellationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D51218949440021140D /* AsyncCancellationTest.swift */; };
+		91BA1D5B2189498C0021140D /* AsyncAwait.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D572189498C0021140D /* AsyncAwait.swift */; };
+		91BA1D5C2189498C0021140D /* AsyncAwait.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D572189498C0021140D /* AsyncAwait.swift */; };
+		91BA1D5D2189498C0021140D /* AsyncURLSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D582189498C0021140D /* AsyncURLSession.swift */; };
+		91BA1D5E2189498C0021140D /* AsyncURLSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D582189498C0021140D /* AsyncURLSession.swift */; };
+		91BA1D5F2189498C0021140D /* AsyncTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D592189498C0021140D /* AsyncTask.swift */; };
+		91BA1D602189498C0021140D /* AsyncTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D592189498C0021140D /* AsyncTask.swift */; };
+		91BA1D612189498C0021140D /* Threadly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D5A2189498C0021140D /* Threadly.swift */; };
+		91BA1D622189498C0021140D /* Threadly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D5A2189498C0021140D /* Threadly.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,10 +34,24 @@
 /* Begin PBXFileReference section */
 		91BA1D41218949250021140D /* AsyncCancellation */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AsyncCancellation; sourceTree = BUILT_PRODUCTS_DIR; };
 		91BA1D44218949250021140D /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		91BA1D4F218949440021140D /* AsyncCancellationTest.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AsyncCancellationTest.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		91BA1D51218949440021140D /* AsyncCancellationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncCancellationTest.swift; sourceTree = "<group>"; };
+		91BA1D53218949440021140D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		91BA1D572189498C0021140D /* AsyncAwait.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AsyncAwait.swift; sourceTree = "<group>"; };
+		91BA1D582189498C0021140D /* AsyncURLSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AsyncURLSession.swift; sourceTree = "<group>"; };
+		91BA1D592189498C0021140D /* AsyncTask.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AsyncTask.swift; sourceTree = "<group>"; };
+		91BA1D5A2189498C0021140D /* Threadly.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Threadly.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		91BA1D3E218949250021140D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		91BA1D4C218949440021140D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -42,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				91BA1D43218949250021140D /* AsyncCancellation */,
+				91BA1D50218949440021140D /* AsyncCancellationTest */,
 				91BA1D42218949250021140D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -50,6 +74,7 @@
 			isa = PBXGroup;
 			children = (
 				91BA1D41218949250021140D /* AsyncCancellation */,
+				91BA1D4F218949440021140D /* AsyncCancellationTest.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -58,8 +83,21 @@
 			isa = PBXGroup;
 			children = (
 				91BA1D44218949250021140D /* main.swift */,
+				91BA1D572189498C0021140D /* AsyncAwait.swift */,
+				91BA1D592189498C0021140D /* AsyncTask.swift */,
+				91BA1D582189498C0021140D /* AsyncURLSession.swift */,
+				91BA1D5A2189498C0021140D /* Threadly.swift */,
 			);
 			path = AsyncCancellation;
+			sourceTree = "<group>";
+		};
+		91BA1D50218949440021140D /* AsyncCancellationTest */ = {
+			isa = PBXGroup;
+			children = (
+				91BA1D51218949440021140D /* AsyncCancellationTest.swift */,
+				91BA1D53218949440021140D /* Info.plist */,
+			);
+			path = AsyncCancellationTest;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -82,6 +120,23 @@
 			productReference = 91BA1D41218949250021140D /* AsyncCancellation */;
 			productType = "com.apple.product-type.tool";
 		};
+		91BA1D4E218949440021140D /* AsyncCancellationTest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 91BA1D54218949440021140D /* Build configuration list for PBXNativeTarget "AsyncCancellationTest" */;
+			buildPhases = (
+				91BA1D4B218949440021140D /* Sources */,
+				91BA1D4C218949440021140D /* Frameworks */,
+				91BA1D4D218949440021140D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AsyncCancellationTest;
+			productName = AsyncCancellationTest;
+			productReference = 91BA1D4F218949440021140D /* AsyncCancellationTest.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -93,6 +148,9 @@
 				ORGANIZATIONNAME = Doug;
 				TargetAttributes = {
 					91BA1D40218949250021140D = {
+						CreatedOnToolsVersion = 10.0;
+					};
+					91BA1D4E218949440021140D = {
 						CreatedOnToolsVersion = 10.0;
 					};
 				};
@@ -110,9 +168,20 @@
 			projectRoot = "";
 			targets = (
 				91BA1D40218949250021140D /* AsyncCancellation */,
+				91BA1D4E218949440021140D /* AsyncCancellationTest */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		91BA1D4D218949440021140D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		91BA1D3D218949250021140D /* Sources */ = {
@@ -120,6 +189,22 @@
 			buildActionMask = 2147483647;
 			files = (
 				91BA1D45218949250021140D /* main.swift in Sources */,
+				91BA1D612189498C0021140D /* Threadly.swift in Sources */,
+				91BA1D5B2189498C0021140D /* AsyncAwait.swift in Sources */,
+				91BA1D5D2189498C0021140D /* AsyncURLSession.swift in Sources */,
+				91BA1D5F2189498C0021140D /* AsyncTask.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		91BA1D4B218949440021140D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				91BA1D52218949440021140D /* AsyncCancellationTest.swift in Sources */,
+				91BA1D622189498C0021140D /* Threadly.swift in Sources */,
+				91BA1D5C2189498C0021140D /* AsyncAwait.swift in Sources */,
+				91BA1D5E2189498C0021140D /* AsyncURLSession.swift in Sources */,
+				91BA1D602189498C0021140D /* AsyncTask.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -259,6 +344,40 @@
 			};
 			name = Release;
 		};
+		91BA1D55218949440021140D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = AsyncCancellationTest/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.doug.AsyncCancellationTest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 4.2;
+			};
+			name = Debug;
+		};
+		91BA1D56218949440021140D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = AsyncCancellationTest/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.doug.AsyncCancellationTest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 4.2;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -276,6 +395,15 @@
 			buildConfigurations = (
 				91BA1D49218949250021140D /* Debug */,
 				91BA1D4A218949250021140D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		91BA1D54218949440021140D /* Build configuration list for PBXNativeTarget "AsyncCancellationTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				91BA1D55218949440021140D /* Debug */,
+				91BA1D56218949440021140D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
