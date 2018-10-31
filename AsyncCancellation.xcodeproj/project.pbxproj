@@ -64,8 +64,8 @@
 		91BA1D38218949250021140D = {
 			isa = PBXGroup;
 			children = (
-				91BA1D43218949250021140D /* AsyncCancellation */,
-				91BA1D50218949440021140D /* AsyncCancellationTest */,
+				91BA1D43218949250021140D /* Source */,
+				91BA1D50218949440021140D /* Test */,
 				91BA1D42218949250021140D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -79,7 +79,7 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		91BA1D43218949250021140D /* AsyncCancellation */ = {
+		91BA1D43218949250021140D /* Source */ = {
 			isa = PBXGroup;
 			children = (
 				91BA1D44218949250021140D /* main.swift */,
@@ -88,16 +88,16 @@
 				91BA1D582189498C0021140D /* AsyncURLSession.swift */,
 				91BA1D5A2189498C0021140D /* Threadly.swift */,
 			);
-			path = AsyncCancellation;
+			path = Source;
 			sourceTree = "<group>";
 		};
-		91BA1D50218949440021140D /* AsyncCancellationTest */ = {
+		91BA1D50218949440021140D /* Test */ = {
 			isa = PBXGroup;
 			children = (
 				91BA1D51218949440021140D /* AsyncCancellationTest.swift */,
 				91BA1D53218949440021140D /* Info.plist */,
 			);
-			path = AsyncCancellationTest;
+			path = Test;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -349,7 +349,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = AsyncCancellationTest/Info.plist;
+				INFOPLIST_FILE = Test/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -366,7 +366,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				INFOPLIST_FILE = AsyncCancellationTest/Info.plist;
+				INFOPLIST_FILE = Test/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
