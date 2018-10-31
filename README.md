@@ -1,6 +1,6 @@
 # Async Cancellation
 
-This project contains experimental code demonstrating 'cancellation' abilities for the upcoming async/await Swift language feature.  The new 'cancellation' feature is described below.
+This project contains experimental code demonstrating proposed 'cancellation' abilities for the upcoming async/await Swift language feature.  The 'cancellation' proposal is described below.
 
 To try it out, clone this project and edit the 'main.swift' source file to add your own sample code.  Also, run the tests to see if it works!
 
