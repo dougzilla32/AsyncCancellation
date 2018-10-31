@@ -1,4 +1,4 @@
-## Async Cancellation
+## Async/Await with Cancellation
 
 This project contains experimental code demonstrating proposed 'cancellation' abilities for the upcoming async/await Swift language feature.  The 'cancellation' proposal is described below.
 
