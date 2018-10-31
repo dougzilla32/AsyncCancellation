@@ -34,10 +34,17 @@ class AsyncTaskChain: AsyncTask {
     
     private let barrier = DispatchQueue(label: "AsyncTaskChain")
     private var taskList = [TaskWithErrorHandler]()
+    private var cancelInvoked = false
     
     func append(_ item: TaskWithErrorHandler) {
+        var cc = false
         barrier.sync {
             taskList.append(item)
+            cc = cancelInvoked
+        }
+        if cc {
+            item.error(AsyncError.cancelled)
+            item.task.cancel()
         }
     }
     
@@ -45,6 +52,7 @@ class AsyncTaskChain: AsyncTask {
         var taskListCopy: [TaskWithErrorHandler]!
         barrier.sync {
             taskListCopy = taskList
+            cancelInvoked = true
         }
         taskListCopy.forEach {
             $0.error(AsyncError.cancelled)
