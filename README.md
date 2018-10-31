@@ -6,7 +6,7 @@ To try it out, clone this project and run it! Edit the 'main.swift' source file 
 
 The 'Async/Await for Swift' proposal can be found here: https://gist.github.com/lattner/429b9070918248274f25b714dcfc7619
 
-The original proposal includes the following primitives, which are implemented (as experimental code) by this project:
+### The original proposal includes the following primitives, which are implemented (as experimental code) by this project:
 
 ```swift
 /// Begins an asynchronous coroutine, transferring control to `body` until it
@@ -36,7 +36,7 @@ func suspendAsync<T>(
 ) async throws -> T
 ```
 
-For 'cancellation' abilities the following additional primitives and protocols as proposed (and experimentally implemented by this project):
+### For 'cancellation' abilities the following additional primitives and protocols as proposed (and experimentally implemented by this project):
 
 ```swift
 /// Represents a generic asynchronous task
@@ -73,7 +73,7 @@ func suspendAsync<T>(
 ) async throws -> T
 ```
 
-The 'cancellation' extension is demonstrated by the following example which adds async/await to URLSessionTask:
+### The 'cancellation' extension is demonstrated by the following example which adds async/await to URLSessionTask:
 
 ```swift
 /// Extend URLSessionTask to be an AsyncTask
