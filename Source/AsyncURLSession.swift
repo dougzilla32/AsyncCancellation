@@ -16,8 +16,8 @@ extension URLSessionTask: AsyncTask {
 }
 
 extension URLSession {
-    func asyncDataTask(with request: URLRequest) throws -> (URLRequest, URLResponse, Data) {
-        return try /* await */ suspendAsync { continuation, error, task in
+    func asyncDataTask(with request: URLRequest) /* async */ throws -> (URLRequest, URLResponse, Data) {
+        return /* await */ try suspendAsync { continuation, error, task in
             let dataTask = self.dataTask(with: request) { data, response, err in
                 if let err = err {
                     error(err)

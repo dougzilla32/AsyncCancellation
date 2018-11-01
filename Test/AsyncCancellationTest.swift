@@ -75,7 +75,7 @@ class AsyncCancellationTest: XCTestCase {
         
         do {
             let chain = try beginAsyncTask {
-                let stuff = try suspendAsync { continuation, error, task in
+                let stuff = /* await */ try suspendAsync { continuation, error, task in
                     task(getStuff(completion: continuation, error: error))
                 }
                 print("Stuff result: \(stuff)")

@@ -39,7 +39,7 @@ public func beginAsync(_ body: @escaping () throws -> Void) rethrows {
             try body()
         } catch {
             if done {
-                // Not sure where this error is supposed to go, unclear from the spec
+                // Not sure where this error is supposed to go as this is unclear from the spec
                 print("beginAsync error: \(error)")
             } else {
                 bodyError = error
@@ -50,7 +50,7 @@ public func beginAsync(_ body: @escaping () throws -> Void) rethrows {
     beginAsyncSemaphore.wait()
     
     if let error = bodyError {
-        // Would like to rethrow the body error here, but the compiler does not seem to allow for this.
+        // Would like to rethrow the body error here but the compiler does not seem to allow for this
         print("beginAsync initial error: \(error)")
         // throw error
     }

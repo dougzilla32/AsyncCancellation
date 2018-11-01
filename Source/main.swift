@@ -20,7 +20,7 @@ public enum WebResourceError: Error {
 func performAppleSearch() /* async */ throws -> String {
     let urlSession = URLSession(configuration: .default)
     let request = URLRequest(url: URL(string: "https://itunes.apple.com/search")!)
-    let result = try /* await */ urlSession.asyncDataTask(with: request)
+    let result = /* await */ try urlSession.asyncDataTask(with: request)
     if let resultString = String(data: result.2, encoding: .utf8) {
         return resultString
     }
@@ -50,7 +50,7 @@ do {
 func loadWebResource(_ name: String) throws -> String {
     let urlSession = URLSession(configuration: .default)
     let request = URLRequest(url: URL(string: "https://itunes.apple.com/search")!)
-    let result = try /* await */ urlSession.asyncDataTask(with: request)
+    let result = /* await */ try urlSession.asyncDataTask(with: request)
     if let resultString = String(data: result.2, encoding: .utf8) {
         return resultString
     }
@@ -59,7 +59,7 @@ func loadWebResource(_ name: String) throws -> String {
 
 /// For the purpose of this example, concat two strings in another thread rather than decoding image data
 func decodeImage(_ profile: String, _ data: String) throws -> String {
-    return try /* await */ suspendAsync { continuation, error, task in
+    return /* await */ try suspendAsync { continuation, error, task in
         let taskItem = DispatchWorkItem {
             continuation("\(profile)+\(data)")
         }
@@ -70,7 +70,7 @@ func decodeImage(_ profile: String, _ data: String) throws -> String {
 
 /// For the purpose of this example, trim a string in another thread rather than processing image data
 func dewarpAndCleanupImage(_ image: String) throws -> String {
-    return try /* await */ suspendAsync { continuation, error, task in
+    return /* await */ try suspendAsync { continuation, error, task in
         let taskItem = DispatchWorkItem {
             continuation(image.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines))
         }
