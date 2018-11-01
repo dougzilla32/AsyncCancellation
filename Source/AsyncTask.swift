@@ -18,8 +18,8 @@ public protocol AsyncTask {
 
 /// 'suspend' and 'resume' are optional
 extension AsyncTask {
-    func suspend() { }
-    func resume() { }
+    public func suspend() { }
+    public func resume() { }
 }
 
 public enum AsyncError: Error {

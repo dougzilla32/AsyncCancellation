@@ -12,20 +12,26 @@ import Foundation
 // async/await with cancellation experimental code
 //
 
+private var asyncChain = ThreadLocal<AsyncTaskChain?>(capturing: nil)
 private var asyncSemaphore = ThreadLocal<DispatchSemaphore?>(capturing: nil)
 
 public func beginAsync(_ body: @escaping () throws -> Void) rethrows {
+    let chain = asyncChain.inner.value
     let beginAsyncSemaphore = DispatchSemaphore(value: 0)
     var bodyError: Error?
     var done = false
     
     DispatchQueue.global(qos: .default).async {
-        if let s = asyncSemaphore.inner.value {
-            print("beginAsync error: invalid thread state")
-            return
+        assert(asyncChain.inner.value == nil)
+        asyncChain.inner.value = chain
+        defer {
+            asyncChain.inner.value = nil
         }
+        
+        assert(asyncSemaphore.inner.value == nil)
         asyncSemaphore.inner.value = beginAsyncSemaphore
         defer {
+            beginAsyncSemaphore.signal()
             asyncSemaphore.inner.value = nil
         }
         
@@ -33,6 +39,7 @@ public func beginAsync(_ body: @escaping () throws -> Void) rethrows {
             try body()
         } catch {
             if done {
+                // Not sure where this error is supposed to go, unclear from the spec
                 print("beginAsync error: \(error)")
             } else {
                 bodyError = error
@@ -51,24 +58,24 @@ public func beginAsync(_ body: @escaping () throws -> Void) rethrows {
     done = true
 }
 
-private var asyncChain = ThreadLocal<AsyncTaskChain?>(capturing: nil)
-
 @discardableResult
 public func beginAsyncTask(_ body: @escaping () throws -> Void) rethrows -> AsyncTask {
-    let chain = AsyncTaskChain()
-
-    try beginAsync {
-        if let c = asyncChain.inner.value {
-            print("beginAsync error: invalid thread state")
-            return
-        }
+    var chainCreated = false
+    let chain: AsyncTaskChain
+    if let c = asyncChain.inner.value {
+        chain = c
+    } else {
+        chain = AsyncTaskChain()
         asyncChain.inner.value = chain
-        defer {
+        chainCreated = true
+    }
+    defer {
+        if chainCreated {
             asyncChain.inner.value = nil
         }
-        
-        try body()
     }
+
+    try beginAsync(body)
     
     return chain
 }
