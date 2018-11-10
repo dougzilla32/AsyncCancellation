@@ -3,10 +3,15 @@
 //  AsyncCancellation
 //
 //  Created by Doug on 10/29/18.
-//  Copyright © 2018 Doug. All rights reserved.
 //
 
 import Foundation
+
+/// Add 'suspend' and 'resume' capabilities to AsyncTaskList
+extension AsyncTaskList {
+    func suspend() { tasks.forEach { ($0.task as? URLSessionTask)?.suspend() } }
+    func resume() { tasks.forEach { ($0.task as? URLSessionTask)?.resume() } }
+}
 
 /// Extend URLSessionTask to be an AsyncTask
 extension URLSessionTask: AsyncTask {
@@ -15,6 +20,7 @@ extension URLSessionTask: AsyncTask {
     }
 }
 
+/// Add async version of dataTask(with:) which uses suspendAsync to handle the callback
 extension URLSession {
     func asyncDataTask(with request: URLRequest) /* async */ throws -> (URLRequest, URLResponse, Data) {
         return /* await */ try suspendAsync { continuation, error, task in

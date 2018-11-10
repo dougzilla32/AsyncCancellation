@@ -3,7 +3,6 @@
 //  AsyncTest
 //
 //  Created by Doug on 10/29/18.
-//  Copyright © 2018 Doug. All rights reserved.
 //
 
 import Foundation
@@ -59,7 +58,7 @@ public func beginAsync(_ body: @escaping () throws -> Void) rethrows {
 }
 
 @discardableResult
-public func beginAsyncTask(_ body: @escaping () throws -> Void) rethrows -> AsyncTask {
+public func beginAsyncTask(_ body: @escaping () throws -> Void) rethrows -> AsyncTaskList {
     var chainCreated = false
     let chain: AsyncTaskChain
     if let c = asyncChain.inner.value {
@@ -166,12 +165,12 @@ public func suspendAsync<T>(
     }
     
     func task(_ task: AsyncTask) {
-        asyncChain.inner.value?.append(AsyncTaskChain.TaskWithErrorHandler(task: task) { error in
+        asyncChain.inner.value?.append((task: task, error: { error in
             if !bodyError && !cancelled {
                 errorHandler(error)
                 cancelled = true
             }
-        })
+        }))
     }
     
     return try suspendAsync { continuation, error in
