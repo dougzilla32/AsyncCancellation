@@ -43,52 +43,57 @@ func suspendAsync<T>(
 public protocol AsyncTask {
     func cancel()
     var isCancelled: Bool { get }
-    func suspend()
-    func resume()
 }
 
-/// 'suspend' and 'resume' are optional
-extension AsyncTask {
-    func suspend() { }
-    func resume() { }
+/// A list of async tasks along with the associated error handler
+public protocol AsyncTaskList: AsyncTask {
+    var tasks: [(task: AsyncTask, error: (Error) -> ())] { get }
 }
 
-public enum AsyncError: Error {
-    case cancelled
-}
+/// Begins an asynchronous coroutine, transferring control to `body` until it
+/// either suspends itself for the first time with `suspendAsync` or completes,
+/// at which point `beginAsync` returns. If the async process completes by
+/// throwing an error before suspending itself, `beginAsync` rethrows the error.
+/// Returns an 'AsyncTaskList' that can be used to cancel the enclosed
+/// asynchronous task chain.
+func beginAsyncTask(_ body: () async throws -> Void) rethrows -> AsyncTaskList
 
-/// Same as 'beginAsync(_ body:)', with the addition of an 'AsyncTask' return value.
-/// The returned 'AsyncTask' can be used to 'cancel', 'suspend' or 'resume' the enclosed
-/// chain of asynchronous tasks.
-@discardableResult
-public func beginAsyncTask(_ body: () async throws -> Void) rethrows -> AsyncTask
-
-/// Same as suspendAsync(_ body: (_ continuation:_ error:)), with the addition of a 'task'
-/// parameter to the 'body' function.  Invoking 'task' will add the given 'AsyncTask' to
-/// the chain of tasks within the current 'beginAsync' closure.
+/// Suspends the current asynchronous task and invokes `body` with the task's
+/// continuation and failure closures. Invoking `continuation` will resume the
+/// coroutine by having `suspendAsync` return the value passed into the
+/// continuation. Invoking `error` will resume the coroutine by having
+/// `suspendAsync` throw the error passed into it. Only one of
+/// `continuation` and `error` may be called; it is a fatal error if both are
+/// called, or if either is called more than once. Invoking 'task' will add the
+/// given 'AsyncTask' to the chain of tasks enclosed by 'beginAsyncTask', or
+/// does nothing if enclosed by 'beginAsync'.
 func suspendAsync<T>(
   _ body: (_ continuation: @escaping (T) -> (),
            _ error: @escaping (Error) -> (),
-           _ task: @escaping (AsyncTask) -> ()) -> ()
+           _ task: @esccaping (AsyncTask) -> ()) -> ()
 ) async throws -> T
 ```
 
-#### The 'cancellation' extension is demonstrated by the following example which adds async/await to URLSessionTask.dataTask:
+#### This code shows how to extend `AsyncTask` and how to define a cancellable async method:
 
 ```swift
+/// Add 'suspend' and 'resume' capabilities to AsyncTaskList
+extension AsyncTaskList {
+    func suspend() { tasks.forEach { ($0.task as? URLSessionTask)?.suspend() } }
+    func resume() { tasks.forEach { ($0.task as? URLSessionTask)?.resume() } }
+}
+
 /// Extend URLSessionTask to be an AsyncTask
 extension URLSessionTask: AsyncTask {
-    // URLSessionTask defines a 'cancel' function, so no need to define one here
-    
-    // Add an 'isCancelled' property to indicate if the URLSessionTask has been successfully cancelled
     public var isCancelled: Bool {
         return state == .canceling || (error as NSError?)?.code == NSURLErrorCancelled
     }
 }
 
+/// Add async version of dataTask(with:) which uses suspendAsync to handle the callback
 extension URLSession {
-    func async dataTask(with request: URLRequest) throws -> (URLRequest, URLResponse, Data) {
-        return await suspendAsync { continuation, error, task in
+    func asyncDataTask(with request: URLRequest) /* async */ throws -> (URLRequest, URLResponse, Data) {
+        return /* await */ try suspendAsync { continuation, error, task in
             let dataTask = self.dataTask(with: request) { data, response, err in
                 if let err = err {
                     error(err)
@@ -103,12 +108,12 @@ extension URLSession {
 }
 ```
 
-#### This code shows 'async URLSessionTask.dataTask' in action (and is implemented as experimental code in 'main.swift'):
+#### This code demonstrates how to invoke the async varient of `URLSessionTask.dataTask`:
 
 ```swift
 import Foundation
 
-let chain = beginAsyncTask {
+let taskList = beginAsyncTask {
     let session = URLSession(configuration: .default)
     let request = URLRequest(url: URL(string: "https://itunes.apple.com/search")!)
     do {
@@ -125,5 +130,5 @@ let chain = beginAsyncTask {
 
 // ...
 
-chain.cancel()
+taskList.cancel()
 ```
