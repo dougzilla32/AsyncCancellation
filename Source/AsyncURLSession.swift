@@ -22,7 +22,7 @@ extension URLSessionTask: AsyncTask {
 
 /// Add async version of dataTask(with:) which uses suspendAsync to handle the callback
 extension URLSession {
-    func asyncDataTask(with request: URLRequest) /* async */ throws -> (URLRequest, URLResponse, Data) {
+    func asyncDataTask(with request: URLRequest) /* async */ throws -> (request: URLRequest, response: URLResponse, data: Data) {
         return /* await */ try suspendAsync { continuation, error, task in
             let dataTask = self.dataTask(with: request) { data, response, err in
                 if let err = err {

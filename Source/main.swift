@@ -20,7 +20,7 @@ func performAppleSearch() /* async */ throws -> String {
     let urlSession = URLSession(configuration: .default)
     let request = URLRequest(url: URL(string: "https://itunes.apple.com/search")!)
     let result = /* await */ try urlSession.asyncDataTask(with: request)
-    if let resultString = String(data: result.2, encoding: .utf8) {
+    if let resultString = String(data: result.data, encoding: .utf8) {
         return resultString
     }
     throw WebResourceError.invalidResult
@@ -51,7 +51,7 @@ func loadWebResource(_ name: String) throws -> String {
     let urlSession = URLSession(configuration: .default)
     let request = URLRequest(url: URL(string: "https://itunes.apple.com/search")!)
     let result = /* await */ try urlSession.asyncDataTask(with: request)
-    if let resultString = String(data: result.2, encoding: .utf8) {
+    if let resultString = String(data: result.data, encoding: .utf8) {
         return resultString
     }
     throw WebResourceError.invalidResult

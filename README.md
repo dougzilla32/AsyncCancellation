@@ -92,8 +92,8 @@ extension URLSessionTask: AsyncTask {
 
 /// Add async version of dataTask(with:) which uses suspendAsync to handle the callback
 extension URLSession {
-    func asyncDataTask(with request: URLRequest) /* async */ throws -> (URLRequest, URLResponse, Data) {
-        return /* await */ try suspendAsync { continuation, error, task in
+    func dataTask(with request: URLRequest) async -> (request: URLRequest, response: URLResponse, data: Data) {
+        return await suspendAsync { continuation, error, task in
             let dataTask = self.dataTask(with: request) { data, response, err in
                 if let err = err {
                     error(err)
@@ -118,7 +118,7 @@ let taskList = beginAsyncTask {
     let request = URLRequest(url: URL(string: "https://itunes.apple.com/search")!)
     do {
         let result = await session.dataTask(with: request)
-        if let resultString = String(data: result.2, encoding: .utf8) {
+        if let resultString = String(data: result.data, encoding: .utf8) {
             print("Apple search result: \(resultString)")
         } else {
             print("Apple search result: \(result)")
