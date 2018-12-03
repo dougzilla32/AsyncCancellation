@@ -10,24 +10,26 @@ import Foundation
 /// Represents a generic asynchronous task
 public protocol AsyncTask {
     func cancel()
+
     var isCancelled: Bool { get }
 }
 
-/// A list of async tasks along with the associated error handler
-public protocol AsyncTaskList: AsyncTask {
-    var tasks: [(task: AsyncTask, error: (Error) -> ())] { get }
+/// The async token is used to register cancellable tasks
+public protocol CancelToken {
+    func append(task: AsyncTask, error: @escaping (Error) -> ())
 }
 
 public enum AsyncError: Error {
     case cancelled
+    case missingBeginAsync
 }
 
-class AsyncTaskChain: AsyncTaskList {
+public class CancelContext: CancelToken {
     private let barrier = DispatchQueue(label: "AsyncTaskChain")
     private var taskList = [(task: AsyncTask, error: (Error) -> ())]()
     private var cancelInvoked = false
     
-    var tasks: [(task: AsyncTask, error: (Error) -> ())] {
+    public var tasks: [(task: AsyncTask, error: (Error) -> ())] {
         var taskListCopy: [(task: AsyncTask, error: (Error) -> ())]!
         barrier.sync {
             taskListCopy = taskList
@@ -36,19 +38,19 @@ class AsyncTaskChain: AsyncTaskList {
         
     }
     
-    func append(_ item: (task: AsyncTask, error: (Error) -> ())) {
+    public func append(task: AsyncTask, error: @escaping (Error) -> ()) {
         var cancelled = false
         barrier.sync {
-            taskList.append(item)
+            taskList.append((task: task, error: error))
             cancelled = cancelInvoked
         }
         if cancelled {
-            item.error(AsyncError.cancelled)
-            item.task.cancel()
+            error(AsyncError.cancelled)
+            task.cancel()
         }
     }
     
-    func cancel() {
+    public func cancel() {
         var taskListCopy: [(task: AsyncTask, error: (Error) -> ())]!
         barrier.sync {
             taskListCopy = taskList
@@ -60,12 +62,16 @@ class AsyncTaskChain: AsyncTaskList {
         }
     }
     
-    var isCancelled: Bool {
+    public var isCancelled: Bool {
         for t in tasks {
             if !t.task.isCancelled {
                 return false
             }
         }
         return true
+    }
+
+    public var cancelToken: CancelToken {
+        return self
     }
 }

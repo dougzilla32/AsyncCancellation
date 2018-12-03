@@ -11,33 +11,71 @@ import Foundation
 // async/await with cancellation experimental code
 //
 
-private var asyncChain = ThreadLocal<AsyncTaskChain?>(capturing: nil)
-private var asyncSemaphore = ThreadLocal<DispatchSemaphore?>(capturing: nil)
+private var tlAsyncContext = ThreadLocal<Any?>(capturing: nil)
+private var tlAsyncSemaphore = ThreadLocal<DispatchSemaphore?>(capturing: nil)
 
-public func beginAsync(_ body: @escaping () throws -> Void) rethrows {
-    let chain = asyncChain.inner.value
+public func getCoroutineContext<T>() -> T? {
+    let value = tlAsyncContext.inner.value
+    if let rval = value as? T {
+        return rval
+    } else if let coroutineContexts = value as? [Any] {
+        for context in coroutineContexts {
+            if let rval = context as? T {
+                return rval
+            }
+        }
+    }
+    return nil
+}
+
+public func beginAsync(asyncContext: Any? = nil, _ body: @escaping () throws -> Void) rethrows {
     let beginAsyncSemaphore = DispatchSemaphore(value: 0)
     var bodyError: Error?
-    var done = false
+    var beginAsyncReturned = false
+    
+    let outerContext = tlAsyncContext.inner.value
     
     DispatchQueue.global(qos: .default).async {
-        assert(asyncChain.inner.value == nil)
-        asyncChain.inner.value = chain
+        // Inherit async contexts from parent 'beginAsync'
+        let innerContext: Any?
+        if let asyncContext = asyncContext, let outerContext = outerContext {
+            if let asyncContexts = asyncContext as? [Any], var outerContexts = outerContext as? [Any] {
+                outerContexts.insert(contentsOf: asyncContexts, at: 0)
+                innerContext = outerContexts
+            } else if var asyncContexts = asyncContext as? [Any] {
+                asyncContexts.insert(outerContext, at: 0)
+                innerContext = asyncContexts
+            } else if var outerContexts = outerContext as? [Any] {
+                outerContexts.insert(asyncContext, at: 0)
+                innerContext = outerContexts
+            } else {
+                innerContext = [ asyncContext, outerContext ]
+            }
+        } else if let outerContext = outerContext {
+            innerContext = outerContext
+        } else {
+            innerContext = asyncContext
+        }
+
+        // Check for nil and assign to nil before returning, to ensure this works with thread pools
+        assert(tlAsyncContext.inner.value == nil)
+        tlAsyncContext.inner.value = innerContext
         defer {
-            asyncChain.inner.value = nil
+            tlAsyncContext.inner.value = nil
         }
         
-        assert(asyncSemaphore.inner.value == nil)
-        asyncSemaphore.inner.value = beginAsyncSemaphore
+        // Check for nil and assign to nil before returning, to ensure this works with thread pools
+        assert(tlAsyncSemaphore.inner.value == nil)
+        tlAsyncSemaphore.inner.value = beginAsyncSemaphore
         defer {
             beginAsyncSemaphore.signal()
-            asyncSemaphore.inner.value = nil
+            tlAsyncSemaphore.inner.value = nil
         }
         
         do {
             try body()
         } catch {
-            if done {
+            if beginAsyncReturned {
                 // Not sure where this error is supposed to go as this is unclear from the spec
                 print("beginAsync error: \(error)")
             } else {
@@ -54,36 +92,14 @@ public func beginAsync(_ body: @escaping () throws -> Void) rethrows {
         // throw error
     }
     
-    done = true
-}
-
-@discardableResult
-public func beginAsyncTask(_ body: @escaping () throws -> Void) rethrows -> AsyncTaskList {
-    var chainCreated = false
-    let chain: AsyncTaskChain
-    if let c = asyncChain.inner.value {
-        chain = c
-    } else {
-        chain = AsyncTaskChain()
-        asyncChain.inner.value = chain
-        chainCreated = true
-    }
-    defer {
-        if chainCreated {
-            asyncChain.inner.value = nil
-        }
-    }
-
-    try beginAsync(body)
-    
-    return chain
+    beginAsyncReturned = true
 }
 
 public func suspendAsync<T>(
     _ body: @escaping (_ continuation: @escaping (T) -> ()) -> ()
     ) -> T
 {
-    guard let beginAsyncSemaphore = asyncSemaphore.inner.value else {
+    guard let beginAsyncSemaphore = tlAsyncSemaphore.inner.value else {
         fatalError("suspendAsync must be called within beginAsync")
     }
 
@@ -109,13 +125,24 @@ public func suspendAsync<T>(
                        _ error: @escaping (Error) -> ()) -> ()
     ) throws -> T
 {
-    guard let beginAsyncSemaphore = asyncSemaphore.inner.value else {
+    guard let beginAsyncSemaphore = tlAsyncSemaphore.inner.value else {
         fatalError("suspendAsync must be called within beginAsync")
     }
 
     let suspendAsyncSemaphore = DispatchSemaphore(value: 0)
     var theResult: T?
     var errorResult: Error?
+    
+    func isCancelError(_ error: Error?) -> Bool {
+        guard let e = error as? AsyncError else {
+            return false
+        }
+        if case .cancelled = e {
+            return true
+        } else {
+            return false
+        }
+    }
     
     func continuation(_ result: T) {
         assert(theResult == nil)
@@ -124,8 +151,14 @@ public func suspendAsync<T>(
     }
     
     func error(_ error: Error) {
-        assert(errorResult == nil)
-        errorResult = error
+        // Allow multiple 'cancel' errors
+        if !isCancelError(error) && !isCancelError(errorResult) {
+            assert(errorResult == nil)
+        }
+        // Prefer other errors over 'cancel' errors
+        if errorResult == nil || !isCancelError(error) {
+            errorResult = error
+        }
         suspendAsyncSemaphore.signal()
     }
     
@@ -139,42 +172,4 @@ public func suspendAsync<T>(
     }
     
     return theResult!
-}
-
-public func suspendAsync<T>(
-    _ body: @escaping (_ continuation: @escaping (T) -> (),
-                       _ error: @escaping (Error) -> (),
-                       _ task: @escaping (AsyncTask) -> ()) -> ()
-    ) throws -> T
-{
-    var errorHandler: ((Error) -> ())!
-    var bodyError = false
-    var cancelled = false
-
-    func bodyErrorHandler(_ error: Error) {
-        // If 'bodyError' is true, then call the errorHandler to cause a fatal exception as
-        // the error handler is only allowed to be called once by the body.
-        //
-        // If 'cancelled' is false, then call the errorHandler to handle the error normally.
-        // If 'cancelled' is true, then the errorHandler has already been called with a
-        // cancellation error.
-        if bodyError || !cancelled {
-            errorHandler(error)
-        }
-        bodyError = true
-    }
-    
-    func task(_ task: AsyncTask) {
-        asyncChain.inner.value?.append((task: task, error: { error in
-            if !bodyError && !cancelled {
-                errorHandler(error)
-                cancelled = true
-            }
-        }))
-    }
-    
-    return try suspendAsync { continuation, error in
-        errorHandler = error
-        body(continuation, bodyErrorHandler, task)
-    }
 }

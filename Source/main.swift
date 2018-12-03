@@ -28,14 +28,15 @@ func performAppleSearch() /* async */ throws -> String {
 
 // Execute the URLSession example
 do {
-    let chain = try beginAsyncTask {
+    let context = CancelContext()
+    try beginAsync(asyncContext: context) {
         let result = try performAppleSearch()
         print("Apple search result: \(result)")
     }
     
     // Uncomment to see cancellation behavior
-    // chain.cancel()
-    chain.suspend()
+    // context.cancel()
+    context.suspend()
 } catch {
     print("Apple search error: \(error)")
 }
@@ -59,23 +60,31 @@ func loadWebResource(_ name: String) throws -> String {
 
 /// For the purpose of this example, concat two strings in another thread rather than decoding image data
 func decodeImage(_ profile: String, _ data: String) throws -> String {
-    return /* await */ try suspendAsync { continuation, error, task in
-        let taskItem = DispatchWorkItem {
+    return /* await */ try suspendAsync { continuation, error in
+        let task = DispatchWorkItem {
             continuation("\(profile)+\(data)")
         }
-        task(taskItem)
-        DispatchQueue.global(qos: .default).asyncAfter(deadline: DispatchTime.now() + 0.5, execute: taskItem)
+        if let cancelToken: CancelToken = getCoroutineContext() {
+            cancelToken.append(task: task, error: error)
+        }
+        if let dispatchQueue: DispatchQueue = getCoroutineContext() {
+            dispatchQueue.asyncAfter(deadline: DispatchTime.now() + 0.5, execute: task)
+        }
     }
 }
 
 /// For the purpose of this example, trim a string in another thread rather than processing image data
 func dewarpAndCleanupImage(_ image: String) throws -> String {
-    return /* await */ try suspendAsync { continuation, error, task in
-        let taskItem = DispatchWorkItem {
+    return /* await */ try suspendAsync { continuation, error in
+        let task = DispatchWorkItem {
             continuation(image.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines))
         }
-        task(taskItem)
-        DispatchQueue.global(qos: .default).asyncAfter(deadline: DispatchTime.now() + 0.5, execute: taskItem)
+        if let cancelToken: CancelToken = getCoroutineContext() {
+            cancelToken.append(task: task, error: error)
+        }
+        if let dispatchQueue: DispatchQueue = getCoroutineContext() {
+            dispatchQueue.asyncAfter(deadline: DispatchTime.now() + 0.5, execute: task)
+        }
     }
 }
 
@@ -93,13 +102,15 @@ func processImageData1a() /* async */ throws -> String {
 
 /// Execute the image loading example
 do {
-    let chain = try beginAsyncTask {
+    let queue = DispatchQueue.global(qos: .default)
+    let cancelContext = CancelContext()
+    try beginAsync(asyncContext: [cancelContext, queue]) {
         let result = try processImageData1a()
         print("image result: \(result)")
     }
 
     // Uncomment to see cancellation behavior
-    // chain.cancel()
+    // cancelContext.cancel()
 } catch {
     print("image error: \(error)")
 }

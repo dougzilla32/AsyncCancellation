@@ -41,17 +41,21 @@ class AsyncCancellationTest: XCTestCase {
     
     func testURLSessionSuccess() {
         let ex = expectation(description: "")
-        let chain = beginAsyncTask(appleRequest(ex, shouldSucceed: true))
-        DispatchQueue.global().asyncAfter(deadline: DispatchTime.now() + 5.0) {
-            chain.cancel()
+        let queue = DispatchQueue.global(qos: .default)
+        let cancelContext = CancelContext()
+        beginAsync(asyncContext: [queue, cancelContext], appleRequest(ex, shouldSucceed: true))
+        queue.asyncAfter(deadline: DispatchTime.now() + 5.0) {
+            cancelContext.cancel()
         }
         waitForExpectations(timeout: 1)
     }
     
     func testURLSessionCancellation() {
         let ex = expectation(description: "")
-        let chain = beginAsyncTask(appleRequest(ex, shouldSucceed: false))
-        chain.cancel()
+        let queue = DispatchQueue.global(qos: .default)
+        let cancelContext = CancelContext()
+        beginAsync(asyncContext: [queue, cancelContext], appleRequest(ex, shouldSucceed: false))
+        cancelContext.cancel()
         waitForExpectations(timeout: 1)
     }
     
@@ -71,23 +75,29 @@ class AsyncCancellationTest: XCTestCase {
             return StuffTask()
         }
         
+        func stuffRequest(_ continuation: @escaping (Stuff) -> (),
+                          _ error: @escaping (Error) -> ()) {
+            if let cancelToken: CancelToken = getCoroutineContext() {
+                cancelToken.append(task: getStuff(completion: continuation, error: error), error: error)
+            }
+        }
+        
         let ex = expectation(description: "")
         
         do {
-            let chain = try beginAsyncTask {
-                let stuff = /* await */ try suspendAsync { continuation, error, task in
-                    task(getStuff(completion: continuation, error: error))
-                }
+            let context = CancelContext()
+            try beginAsync(asyncContext: context) {
+                let stuff = /* await */ try suspendAsync(stuffRequest)
                 print("Stuff result: \(stuff)")
                 ex.fulfill()
             }
             
-            chain.cancel()
+            context.cancel()
         } catch {
             print("Stuff error: \(error)")
             XCTFail()
         }
 
-        waitForExpectations(timeout: 1)
+        waitForExpectations(timeout: 2)
     }
 }

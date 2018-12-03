@@ -7,8 +7,8 @@
 
 import Foundation
 
-/// Add 'suspend' and 'resume' capabilities to AsyncTaskList
-extension AsyncTaskList {
+/// Add 'suspend' and 'resume' capabilities to CancelContext
+extension CancelContext {
     func suspend() { tasks.forEach { ($0.task as? URLSessionTask)?.suspend() } }
     func resume() { tasks.forEach { ($0.task as? URLSessionTask)?.resume() } }
 }
@@ -23,7 +23,7 @@ extension URLSessionTask: AsyncTask {
 /// Add async version of dataTask(with:) which uses suspendAsync to handle the callback
 extension URLSession {
     func asyncDataTask(with request: URLRequest) /* async */ throws -> (request: URLRequest, response: URLResponse, data: Data) {
-        return /* await */ try suspendAsync { continuation, error, task in
+        return /* await */ try suspendAsync { continuation, error in
             let dataTask = self.dataTask(with: request) { data, response, err in
                 if let err = err {
                     error(err)
@@ -31,7 +31,9 @@ extension URLSession {
                     continuation((request, response, data))
                 }
             }
-            task(dataTask)
+            if let cancelToken: CancelToken = getCoroutineContext() {
+                cancelToken.append(task: dataTask, error: error)
+            }
             dataTask.resume()
         }
     }
