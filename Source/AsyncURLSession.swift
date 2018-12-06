@@ -24,17 +24,15 @@ extension URLSessionTask: AsyncTask {
 extension URLSession {
     func asyncDataTask(with request: URLRequest) /* async */ throws -> (request: URLRequest, response: URLResponse, data: Data) {
         return /* await */ try suspendAsync { continuation, error in
-            let dataTask = self.dataTask(with: request) { data, response, err in
+            let task = self.dataTask(with: request) { data, response, err in
                 if let err = err {
                     error(err)
                 } else if let response = response, let data = data {
                     continuation((request, response, data))
                 }
             }
-            if let cancelToken: CancelToken = getCoroutineContext() {
-                cancelToken.append(task: dataTask, error: error)
-            }
-            dataTask.resume()
+            (getCoroutineContext() as CancelContext?)?.cancelToken.add(task: task)
+            task.resume()
         }
     }
 }
