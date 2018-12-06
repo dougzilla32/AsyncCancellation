@@ -81,7 +81,7 @@ class AsyncCancellationTest: XCTestCase {
             let context = CancelContext()
             try beginAsync(asyncContext: context) {
                 let stuff = /* await */ try suspendAsync { continuation, error in
-                    (getCoroutineContext() as CancelContext?)?.cancelToken.add(task: getStuff(completion: continuation, error: error))
+                    (getCoroutineContext() as CancelToken?)?.add(task: getStuff(completion: continuation, error: error))
                 }
                 print("Stuff result: \(stuff)")
                 ex.fulfill()

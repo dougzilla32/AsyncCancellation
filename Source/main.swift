@@ -64,7 +64,7 @@ func decodeImage(_ profile: String, _ data: String) throws -> String {
         let task = DispatchWorkItem {
             continuation("\(profile)+\(data)")
         }
-        (getCoroutineContext() as CancelContext?)?.cancelToken.add(task: task)
+        (getCoroutineContext() as CancelToken?)?.add(task: task)
         if let dispatchQueue: DispatchQueue = getCoroutineContext() {
             dispatchQueue.asyncAfter(deadline: DispatchTime.now() + 0.5, execute: task)
         }
@@ -77,7 +77,7 @@ func dewarpAndCleanupImage(_ image: String) throws -> String {
         let task = DispatchWorkItem {
             continuation(image.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines))
         }
-        (getCoroutineContext() as CancelContext?)?.cancelToken.add(task: task)
+        (getCoroutineContext() as CancelToken?)?.add(task: task)
         if let dispatchQueue: DispatchQueue = getCoroutineContext() {
             dispatchQueue.asyncAfter(deadline: DispatchTime.now() + 0.5, execute: task)
         }

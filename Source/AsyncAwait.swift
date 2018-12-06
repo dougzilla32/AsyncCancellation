@@ -162,7 +162,7 @@ public func suspendAsync<T>(
  Code inside `body` can support cancellation as follows:
  ```swift
  // 'task' conforms to 'AsyncTask'
- (getCoroutineContext() as CancelContext?)?.cancelToken.add(task: task)
+ (getCoroutineContext() as CancelToken?)?.add(task: task)
  ```
  */
 public func suspendAsync<T>(
@@ -225,9 +225,9 @@ public func suspendAsync<T>(
         suspendAsyncSemaphore.signal()
     }
     
-    cancelContext?.makeToken(id: cancelTokenId, error: error)
+    cancelContext?.pushCancelScope(id: cancelTokenId, error: error)
     body(continuation, error)
-    cancelContext?.clearToken(id: cancelTokenId)
+    cancelContext?.popCancelScope(id: cancelTokenId)
 
     beginAsyncSemaphore.signal()
     suspendAsyncSemaphore.wait()

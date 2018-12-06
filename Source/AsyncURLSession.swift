@@ -31,7 +31,7 @@ extension URLSession {
                     continuation((request, response, data))
                 }
             }
-            (getCoroutineContext() as CancelContext?)?.cancelToken.add(task: task)
+            (getCoroutineContext() as CancelToken?)?.add(task: task)
             task.resume()
         }
     }

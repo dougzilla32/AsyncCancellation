@@ -11,6 +11,8 @@
 		911EEC87218A9FAD00A90989 /* Future.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911EEC85218A9FAD00A90989 /* Future.swift */; };
 		911EEC89218AA60B00A90989 /* AsyncDispatchWorkItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911EEC88218AA60B00A90989 /* AsyncDispatchWorkItem.swift */; };
 		911EEC8A218AA60B00A90989 /* AsyncDispatchWorkItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911EEC88218AA60B00A90989 /* AsyncDispatchWorkItem.swift */; };
+		913BF55B21B90A850090CF58 /* Stack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 913BF55A21B90A850090CF58 /* Stack.swift */; };
+		913BF55C21B90C800090CF58 /* Stack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 913BF55A21B90A850090CF58 /* Stack.swift */; };
 		91BA1D45218949250021140D /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D44218949250021140D /* main.swift */; };
 		91BA1D52218949440021140D /* AsyncCancellationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D51218949440021140D /* AsyncCancellationTest.swift */; };
 		91BA1D5B2189498C0021140D /* AsyncAwait.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D572189498C0021140D /* AsyncAwait.swift */; };
@@ -38,6 +40,7 @@
 /* Begin PBXFileReference section */
 		911EEC85218A9FAD00A90989 /* Future.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Future.swift; sourceTree = "<group>"; };
 		911EEC88218AA60B00A90989 /* AsyncDispatchWorkItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncDispatchWorkItem.swift; sourceTree = "<group>"; };
+		913BF55A21B90A850090CF58 /* Stack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stack.swift; sourceTree = "<group>"; };
 		91BA1D41218949250021140D /* AsyncCancellation */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AsyncCancellation; sourceTree = BUILT_PRODUCTS_DIR; };
 		91BA1D44218949250021140D /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		91BA1D4F218949440021140D /* AsyncCancellationTest.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AsyncCancellationTest.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -96,6 +99,7 @@
 				911EEC88218AA60B00A90989 /* AsyncDispatchWorkItem.swift */,
 				91BA1D582189498C0021140D /* AsyncURLSession.swift */,
 				911EEC85218A9FAD00A90989 /* Future.swift */,
+				913BF55A21B90A850090CF58 /* Stack.swift */,
 				91BA1D5A2189498C0021140D /* Threadly.swift */,
 			);
 			path = Source;
@@ -202,6 +206,7 @@
 				911EEC86218A9FAD00A90989 /* Future.swift in Sources */,
 				91BA1D45218949250021140D /* main.swift in Sources */,
 				91BA1D612189498C0021140D /* Threadly.swift in Sources */,
+				913BF55B21B90A850090CF58 /* Stack.swift in Sources */,
 				91BA1D5B2189498C0021140D /* AsyncAwait.swift in Sources */,
 				91BA1D5D2189498C0021140D /* AsyncURLSession.swift in Sources */,
 				91BA1D5F2189498C0021140D /* AsyncTask.swift in Sources */,
@@ -212,6 +217,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				913BF55C21B90C800090CF58 /* Stack.swift in Sources */,
 				911EEC8A218AA60B00A90989 /* AsyncDispatchWorkItem.swift in Sources */,
 				911EEC87218A9FAD00A90989 /* Future.swift in Sources */,
 				91BA1D52218949440021140D /* AsyncCancellationTest.swift in Sources */,
