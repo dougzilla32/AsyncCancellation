@@ -205,16 +205,18 @@ public func suspendAsync<T>(
     }
     
     func error(_ error: Error) {
-        assert(theResult == nil)
-        if errorResult == nil {
-            // Remove resolved tasks from the cancel context and clear the current cancel token
-            cancelContext?.removeAll(id: cancelTokenId)
-        }
+        assert(theResult == nil || isCancelError(error))
         
         // Allow multiple 'cancel' errors
         if !isCancelError(error) && !isCancelError(errorResult) {
             assert(errorResult == nil)
         }
+
+        if errorResult == nil {
+            // Remove resolved tasks from the cancel context and clear the current cancel token
+            cancelContext?.removeAll(id: cancelTokenId)
+        }
+
         // Prefer other errors over 'cancel' errors
         if errorResult == nil || !isCancelError(error) {
             errorResult = error
