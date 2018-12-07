@@ -39,7 +39,7 @@ do {
     }
 
 } catch {
-    print("Apple search error: \(error)")
+    // Error is handled by the beginAsync 'error' callback
 }
 
 /// Set a timeout (seconds) to prevent hangs
@@ -119,7 +119,7 @@ do {
         print("image result: \(result)")
     }
 } catch {
-    print("image error: \(error)")
+    // Error is handled by the beginAsync 'error' callback
 }
 
 /// Set a timeout (seconds) to prevent hangs

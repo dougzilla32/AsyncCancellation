@@ -88,7 +88,6 @@ public class CancelContext: CancelToken {
  */
 public func getCoroutineContext<T>() -> T?
 
-
 /**
  Begins an asynchronous coroutine, transferring control to `body` until it
  either suspends itself for the first time with `suspendAsync` or completes,
@@ -181,7 +180,6 @@ extension URLSession {
 ```swift
 import Foundation
 
-
 /// Example: how to make a cancellable web request with the URLSession.dataTask coroutine
 let cancelContext = CancelContext()
 let error: (Error) -> () = { error in
@@ -199,7 +197,7 @@ do {
     /// Set a timeout (seconds) to prevent hangs
     cancelContext.timeout = 30.0
 } catch {
-    print("Apple search error: \(error)")
+    // Error is handled by the beginAsync 'error' callback
 }
 
 ...
@@ -247,7 +245,7 @@ do {
         print("image result: \(result)")
     }
 } catch {
-    print("Image loading error: \(error)")
+    // Error is handled by the beginAsync 'error' callback
 }
 
 
