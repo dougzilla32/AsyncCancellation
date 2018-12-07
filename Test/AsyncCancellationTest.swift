@@ -239,4 +239,30 @@ class AsyncCancellationTest: XCTestCase {
         cancelContext.timeout = 0.25
         waitForExpectations(timeout: 1)
     }
+    
+    func testTimer() {
+        let ex = expectation(description: "")
+        let cancelContext = CancelContext()
+        let error: (Error) -> () = { error in
+            XCTFail()
+        }
+        do {
+            try beginAsync(context: cancelContext, error: error) {
+                let theMeaningOfLife: Int = /* await */ try suspendAsync { continuation, error in
+                    let workItem = DispatchWorkItem {
+                        Thread.sleep(forTimeInterval: 0.1)
+                        continuation(42)
+                    }
+                    DispatchQueue.global().async(execute: workItem)
+                    (getCoroutineContext() as CancelToken?)?.add(task: workItem)
+                }
+                if theMeaningOfLife == 42 {
+                    ex.fulfill()
+                }
+            }
+        } catch {
+            XCTFail()
+        }
+        waitForExpectations(timeout: 1)
+    }
 }

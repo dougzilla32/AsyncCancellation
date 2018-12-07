@@ -1,10 +1,83 @@
 ## Async/Await with Cancellation
 
-This project contains experimental code demonstrating proposed 'cancellation' abilities for the upcoming async/await Swift language feature.  The 'cancellation' proposal is described below.
+This project is a prototype demonstrating 'cancellation' and 'timeout' abilities for the upcoming async/await Swift language feature.  The async/await feature is described in ['Async/Await for Swift' by Chris Lattner and Joe Groff](https://gist.github.com/lattner/429b9070918248274f25b714dcfc7619) and further discussed in [Contextualizing async coroutines](https://forums.swift.org/t/contextualizing-async-coroutines/6588).  The addition of 'cancellation' and 'timeout' is proposed and discussed below.
 
 To try it out, clone this project and run it!  And run the tests to see if it is working properly!
 
+### Overview
+
+In this proposal, the cancellation and timeout features are implemented using coroutine contexts.  A `CancelContext` is used to track cancellable asynchronous tasks within coroutines.  Tasks are manually added to the `CancelContext` as they are created, and are automatically removed from the `CancelContext` when their coroutine is resolved (i.e. the coroutine produces a result or an error).  The `CancelContext` has a `cancel()` method and a `timeout: TimeInterval` property, which can be used to explicitly cancel all unresolved tasks or to set a timeout for cancelling all unresolved tasks respectively.
+
+### Examples
+
+```swift
+// Simple timer example
+
+let cancelContext = CancelContext()
+let error: (Error) -> () = { error in
+    if error.isCancelled {
+        print("Calculation cancelled!")
+    } else {
+        print("An unknown error occurred while calculating the meaning of life: \(error)")
+    }
+}
+
+do {
+    try beginAsync(context: cancelContext, error: error) {
+        let theMeaningOfLife: Int = await suspendAsync { continuation, error in
+            let workItem = DispatchWorkItem {
+                Thread.sleep(forTimeInterval: 0.1)
+                continuation(42)
+            }
+            DispatchQueue.global().async(execute: workItem)
+            (getCoroutineContext() as CancelToken?)?.add(task: workItem)
+        }
+        if theMeaningOfLife == 42 {
+            print("The meaning of life is 42!!")
+        } else {
+            print("Wrong answer!")
+        }
+    }
+} catch {
+    // Error is handled by the beginAsync 'error' callback
+}
+
+// Set a timeout (seconds) to prevent hangs
+cancelContext.timeout = 30.0
+
+...
+
+// Call 'cancel' to abort the request
+cancelContext.cancel()
+```
+
 `main.swift` contains the image loading example from ['Async/Await for Swift' by Chris Lattner and Joe Groff](https://gist.github.com/lattner/429b9070918248274f25b714dcfc7619). 
+
+### CancelToken
+
+... TODO: describe `CancelToken` error handling
+
+### Contextualizing async coroutines
+
+The proposal for [Contextualizing async coroutines](https://forums.swift.org/t/contextualizing-async-coroutines/6588) is incorporated in this implementation.  During my attempt to use contexts with async coroutines, I discovered that it is desirable to allow multiple contexts with `beginAsync`.  Also, for nested `beginAsync` calls the contexts for the outer scopes should be preserved.  My take on this is the following:
+
+* The coroutine context type is `Any`
+* Multiple contexts are combined into an array  `[Any]`
+* Inner contexts take precidence over outer contexts.
+* There is a global function `getCoroutineContext<T>() -> T?`.  If the current coroutine context conforms to `T` then it is returned directly. Otherwise if the context is an `[Any]`, the first member of the array that conforms to `T` is returned.  If there is no match then `nil` is returned.
+* For nested calls to `beginAsync` the outer coroutine context is merged with the new coroutine context to form the inner coroutine context using the following rules:
+    1. If either `outer` or `new` is `nil`, then use the non-nil value
+    2. If `outer` ===  `new`, then it is the same reference so just use `outer`
+    3. If  `outer` and `new` are both `[Any]`, then concatenated `new` and `outer` (`new` comes first)
+    4. If  `outer` is `[Any]`, then prepend `new`  to `outer`
+    5. If `new` is `[Any]`, then append `outer` to `new`
+    6. Concatenate `new` and  `outer` as `[Any]`
+
+### Error handling for `beginAsync`
+
+Error handling for `beginAsync` is not fully specified in ['Async/Await for Swift' by Chris Lattner and Joe Groff](https://gist.github.com/lattner/429b9070918248274f25b714dcfc7619) .
+
+... TODO: describe `beginAsync` error handling
 
 #### The original proposal includes the following primitives, which are implemented (as experimental code) in this project:
 
@@ -55,6 +128,18 @@ public protocol CancelToken {
 /// Cancellation error
 public enum AsyncError: Error {
     case cancelled
+}
+
+extension Error {
+    public var isCancelled: Bool {
+        do {
+            throw self
+        } catch AsyncError.cancelled {
+            return true
+        } catch {
+            return false
+        }
+    }
 }
 
 /**
@@ -190,7 +275,8 @@ extension URLSession {
 ```swift
 import Foundation
 
-/// Example: how to make a cancellable web request with the URLSession.dataTask coroutine
+// Example: how to make a cancellable web request with the
+// URLSession.dataTask coroutine
 let cancelContext = CancelContext()
 let error: (Error) -> () = { error in
     print("Apple search error: \(error)")
@@ -203,16 +289,16 @@ do {
         let result = await urlSession.dataTask(with: request)
         print("result: \(String(data: result.data, encoding: .utf8))")
     }
-
-    /// Set a timeout (seconds) to prevent hangs
-    cancelContext.timeout = 30.0
 } catch {
     // Error is handled by the beginAsync 'error' callback
 }
 
+// Set a timeout (seconds) to prevent hangs
+cancelContext.timeout = 30.0
+
 ...
 
-/// Call 'cancel' to abort the request
+// Call 'cancel' to abort the request
 cancelContext.cancel()
 ```
 
@@ -242,7 +328,7 @@ func processImageData1a() async -> Image {
     return imageResult
 }
 
-/// Execute the image loading example
+// Execute the image loading example
 let queue = DispatchQueue.global(qos: .default)
 let cancelContext = CancelContext()
 let error: (Error) -> () = { error in
@@ -259,7 +345,7 @@ do {
 }
 
 
-/// Set a timeout (seconds) to prevent hangs
+// Set a timeout (seconds) to prevent hangs
 cancelContext.timeout = 30.0
 
 ...
