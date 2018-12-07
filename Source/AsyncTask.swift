@@ -136,7 +136,7 @@ public class CancelContext: CancelToken {
         return true
     }
     
-    /// The list of unresolved associated tasks
+    /// The list of unresolved tasks for this cancel context
     public var tasks: [CancelContext.Cancellable] {
         var taskListCopy: [CancelContext.Cancellable]!
         barrier.sync {
@@ -174,7 +174,8 @@ public class CancelContext: CancelToken {
         }
     }
     
-    /// Create a token that can be used to associate a task with this context
+    /// Create a token that can be used to associate a task with this context, and can be used
+    /// to cancel or set a timeout on only the token's tasks (as a subset of the CancelContext tasks).
     public func makeCancelToken() -> CancelToken {
         var error: ((Error) -> ())!
         barrier.sync {

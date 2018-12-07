@@ -2,11 +2,11 @@
 
 This project contains experimental code demonstrating proposed 'cancellation' abilities for the upcoming async/await Swift language feature.  The 'cancellation' proposal is described below.
 
-To try it out, clone this project and run it!  Also, run the tests to see if it is working properly!
+To try it out, clone this project and run it!  And run the tests to see if it is working properly!
 
-`main.swift` contains the image loading example from the ['Async/Await for Swift' proposal by Chris Lattner and Joe Groff](https://gist.github.com/lattner/429b9070918248274f25b714dcfc7619). 
+`main.swift` contains the image loading example from ['Async/Await for Swift' by Chris Lattner and Joe Groff](https://gist.github.com/lattner/429b9070918248274f25b714dcfc7619). 
 
-#### The original proposal includes the following primitives, which are implemented (as experimental code) by this project:
+#### The original proposal includes the following primitives, which are implemented (as experimental code) in this project:
 
 ```swift
 /// Begins an asynchronous coroutine, transferring control to `body` until it
@@ -36,7 +36,7 @@ func suspendAsync<T>(
 ) async throws -> T
 ```
 
-#### For 'cancellation' abilities the following changes and additions are proposed (these are experimentally implemented by this project):
+#### For 'cancellation' abilities the following changes and additions are proposed (and are experimentally implemented in this project):
 
 ```swift
 /// Represents a generic asynchronous task
@@ -72,12 +72,22 @@ public class CancelContext: CancelToken {
     /// Add a cancellable task to the cancel context
     public func add(task: AsyncTask)
 
-    /// Create a token that can be used to associate a task with this context
+    /// Create a token that can be used to associate a task with this context, and can be used
+    /// to cancel or set a timeout on only the token's tasks (as a subset of the CancelContext tasks).
     public func makeCancelToken() -> CancelToken
     
     /// All associated unresolved tasks will be cancelled after the given timeout.
     /// Default is no timeout.
     public var timeout: TimeInterval
+
+    /// The list of unresolved tasks for this cancel context
+    public var tasks: [CancelContext.Cancellable] {
+
+    public struct Cancellable {
+        let task: AsyncTask
+        let tokenId: UInt
+        let error: (Error) -> ()
+    }
 }
 
 /**
