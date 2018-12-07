@@ -6,7 +6,15 @@ To try it out, clone this project and run it!  And run the tests to see if it is
 
 ### Overview
 
-In this proposal, the cancellation and timeout features are implemented using coroutine contexts.  A `CancelContext` is used to track cancellable asynchronous tasks within coroutines.  Tasks are manually added to the `CancelContext` as they are created, and are automatically removed from the `CancelContext` when their coroutine is resolved (i.e. the coroutine produces a result or an error).  The `CancelContext` has a `cancel()` method and a `timeout: TimeInterval` property, which can be used to explicitly cancel all unresolved tasks or to set a timeout for cancelling all unresolved tasks respectively.
+In this proposal, the cancellation and timeout features are implemented using coroutine contexts:
+
+* A cancel context (class  `CancelContext`) is used to track cancellable asynchronous tasks within coroutines.
+* Tasks are manually added to the cancel context as they are created, and are automatically removed from the cancel context when their coroutine is resolved (i.e. the coroutine produces a result or an error).
+* The cancel context has a `cancel()` method that can be used to explicitly cancel all unresolved tasks.
+* The cancel context has a `timeout: TimeInterval` property for setting a timeout to cancel all unresolved tasks.
+* All unresolved tasks are immediately resolved with the error `AsyncError.cancelled` when `cancel()` is called on their cancel context.  Unwinding the task and task cleanup happen in the background after the cancellation error is thrown.
+* The cancel context is thread safe, therefore the same instance can be used in multiple calls to `beginAsync` (large granularity)
+* The cancel context can produce cancel tokens for fine granularity of cancellation and timeouts.  The cancel token can be used as a coroutine context, which will create a tree shaped cancellation structure (note: the cancel context is itself a cancel token)
 
 ### Examples
 
@@ -16,9 +24,9 @@ In this proposal, the cancellation and timeout features are implemented using co
 let cancelContext = CancelContext()
 let error: (Error) -> () = { error in
     if error.isCancelled {
-        print("Calculation cancelled!")
+        print("Meaning Of Life calculation cancelled!")
     } else {
-        print("An unknown error occurred while calculating the meaning of life: \(error)")
+        print("An unknown error occurred while calculating the Meaning Of Life: \(error)")
     }
 }
 
@@ -33,9 +41,9 @@ do {
             (getCoroutineContext() as CancelToken?)?.add(task: workItem)
         }
         if theMeaningOfLife == 42 {
-            print("The meaning of life is 42!!")
+            print("The Meaning Of Life is 42!!")
         } else {
-            print("Wrong answer!")
+            print("Wait, what?")
         }
     }
 } catch {
