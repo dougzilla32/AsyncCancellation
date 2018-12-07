@@ -27,20 +27,30 @@ func performAppleSearch() /* async */ throws -> String {
 }
 
 // Execute the URLSession example
+let appleCancelContext = CancelContext()
+let appleError: (Error) -> () = { error in
+    print("Apple search error: \(error)")
+}
+
 do {
-    let context = CancelContext()
-    try beginAsync(asyncContext: context) {
+    try beginAsync(context: appleCancelContext, error: appleError) {
         let result = try performAppleSearch()
         print("Apple search result: \(result)")
     }
-    
-    // Uncomment to see cancellation behavior
-    // context.cancel()
-    context.suspend()
+
 } catch {
     print("Apple search error: \(error)")
 }
 
+/// Set a timeout (seconds) to prevent hangs
+appleCancelContext.timeout = 30.0
+
+// Uncomment to see cancellation behavior
+// appleCancelContext.cancel()
+appleCancelContext.suspend()
+
+
+/** ************************************************************************ */
 
 //
 // Image loading example from 'Async/Await for Swift' by Chris Lattner and Joe Groff
@@ -97,19 +107,26 @@ func processImageData1a() /* async */ throws -> String {
 }
 
 /// Execute the image loading example
+let queue = DispatchQueue.global(qos: .default)
+let imageCancelContext = CancelContext()
+let imageError: (Error) -> () = { error in
+    print("Image loading error: \(error)")
+}
+
 do {
-    let queue = DispatchQueue.global(qos: .default)
-    let cancelContext = CancelContext()
-    try beginAsync(asyncContext: [cancelContext, queue]) {
+    try beginAsync(context: [imageCancelContext, queue], error: imageError) {
         let result = try processImageData1a()
         print("image result: \(result)")
     }
-
-    // Uncomment to see cancellation behavior
-    // cancelContext.cancel()
 } catch {
     print("image error: \(error)")
 }
+
+/// Set a timeout (seconds) to prevent hangs
+imageCancelContext.timeout = 30.0
+
+// Uncomment to see cancellation behavior
+// imageCancelContext.cancel()
 
 // Wait long enough for everything to complete
 RunLoop.current.run(until: Date() + 5.0)

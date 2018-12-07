@@ -72,7 +72,7 @@ public func getCoroutineContext<T>() -> T? {
  - Parameter asyncContext: the context to use for all encapsulated corotines
  - Parameter error: invoked if 'body' throws an error
  */
-public func beginAsync(asyncContext: Any? = nil, error errorHandler: ((Error) -> ())? = nil, _ body: @escaping () throws -> Void) rethrows {
+public func beginAsync(context: Any? = nil, error errorHandler: ((Error) -> ())? = nil, _ body: @escaping () throws -> Void) rethrows {
     let beginAsyncSemaphore = DispatchSemaphore(value: 0)
     var bodyError: Error?
     var beginAsyncReturned = false
@@ -82,25 +82,25 @@ public func beginAsync(asyncContext: Any? = nil, error errorHandler: ((Error) ->
     DispatchQueue.global(qos: .default).async {
         // Inherit async contexts from parent 'beginAsync'
         let innerContext: Any?
-        if let asyncContext = asyncContext, let outerContext = outerContext {
-            if asyncContext as AnyObject === outerContext as AnyObject {
-                innerContext = asyncContext
-            } else if let asyncContexts = asyncContext as? [Any], var outerContexts = outerContext as? [Any] {
-                outerContexts.insert(contentsOf: asyncContexts, at: 0)
+        if let context = context, let outerContext = outerContext {
+            if context as AnyObject === outerContext as AnyObject {
+                innerContext = context
+            } else if let contexts = context as? [Any], var outerContexts = outerContext as? [Any] {
+                outerContexts.insert(contentsOf: contexts, at: 0)
                 innerContext = outerContexts
-            } else if var asyncContexts = asyncContext as? [Any] {
-                asyncContexts.insert(outerContext, at: 0)
-                innerContext = asyncContexts
+            } else if var contexts = context as? [Any] {
+                contexts.insert(outerContext, at: 0)
+                innerContext = contexts
             } else if var outerContexts = outerContext as? [Any] {
-                outerContexts.insert(asyncContext, at: 0)
+                outerContexts.insert(context, at: 0)
                 innerContext = outerContexts
             } else {
-                innerContext = [ asyncContext, outerContext ]
+                innerContext = [ context, outerContext ]
             }
         } else if let outerContext = outerContext {
             innerContext = outerContext
         } else {
-            innerContext = asyncContext
+            innerContext = context
         }
 
         // Check for nil and assign to nil before returning, to ensure this works with thread pools

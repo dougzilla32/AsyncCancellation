@@ -146,6 +146,7 @@ public class CancelContext: CancelToken {
         
     }
     
+    /// Add a cancellable task to the cancel context
     public func add(task: AsyncTask) {
         guard let scope = cancelScopeStack.top else {
             fatalError("'CancelContext.add' may only be called from inside a 'suspendAsync' closure")
@@ -173,7 +174,7 @@ public class CancelContext: CancelToken {
         }
     }
     
-    /// A token that can be used to associate a task with this context
+    /// Create a token that can be used to associate a task with this context
     public func makeCancelToken() -> CancelToken {
         var error: ((Error) -> ())!
         barrier.sync {

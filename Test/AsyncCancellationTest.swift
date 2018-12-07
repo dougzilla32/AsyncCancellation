@@ -64,7 +64,7 @@ class AsyncCancellationTest: XCTestCase {
         let ex = expectation(description: "")
         let queue = DispatchQueue.global(qos: .default)
         let cancelContext = CancelContext()
-        beginAsync(asyncContext: [queue, cancelContext], appleRequest(ex, shouldSucceed: true))
+        beginAsync(context: [queue, cancelContext], appleRequest(ex, shouldSucceed: true))
         queue.asyncAfter(deadline: DispatchTime.now() + 5.0) {
             cancelContext.cancel()
         }
@@ -75,7 +75,7 @@ class AsyncCancellationTest: XCTestCase {
         let ex = expectation(description: "")
         let queue = DispatchQueue.global(qos: .default)
         let cancelContext = CancelContext()
-        beginAsync(asyncContext: [queue, cancelContext], appleRequest(ex, shouldSucceed: false))
+        beginAsync(context: [queue, cancelContext], appleRequest(ex, shouldSucceed: false))
         cancelContext.cancel()
         waitForExpectations(timeout: 1)
     }
@@ -100,7 +100,7 @@ class AsyncCancellationTest: XCTestCase {
         
         do {
             let context = CancelContext()
-            try beginAsync(asyncContext: context) {
+            try beginAsync(context: context) {
                 let stuff = /* await */ try suspendAsync { continuation, error in
                     (getCoroutineContext() as CancelToken?)?.add(task: getStuff(completion: continuation, error: error))
                 }
@@ -121,7 +121,7 @@ class AsyncCancellationTest: XCTestCase {
         let ex = expectation(description: "")
         let queue = DispatchQueue.global(qos: .default)
         let cancelContext = CancelContext()
-        beginAsync(asyncContext:  [queue, cancelContext]) {
+        beginAsync(context:  [queue, cancelContext]) {
             beginAsync(self.appleRequest(ex, shouldSucceed: false))
         }
         cancelContext.cancel()
@@ -158,7 +158,7 @@ class AsyncCancellationTest: XCTestCase {
         let queue = DispatchQueue.global(qos: .default)
         let cancelContext = CancelContext()
         do {
-            try beginAsync(asyncContext: [queue, cancelContext], error: { error in
+            try beginAsync(context: [queue, cancelContext], error: { error in
                 error.isCancelled ? exCancel.fulfill() : XCTFail()
             }) {
                 let result: (request: URLRequest, response: URLResponse, data: Data) = try suspendAsync { continuation, error in
@@ -204,11 +204,11 @@ class AsyncCancellationTest: XCTestCase {
         let queue = DispatchQueue.global(qos: .default)
         let cancelContext = CancelContext()
         do {
-            try beginAsync(asyncContext: [queue, cancelContext], error: { error in
+            try beginAsync(context: [queue, cancelContext], error: { error in
                 error.isCancelled ? exCancel.fulfill() : XCTFail()
             }) {
                 let result: String = try suspendAsync { continuation, errorHandler in
-                    beginAsync(asyncContext: [queue, TestCancelToken(
+                    beginAsync(context: [queue, TestCancelToken(
                         token: cancelContext.makeCancelToken(),
                         exAdd: exTokenAdd,
                         exCancel: nil,
@@ -235,7 +235,7 @@ class AsyncCancellationTest: XCTestCase {
         let ex = expectation(description: "")
         let queue = DispatchQueue.global(qos: .default)
         let cancelContext = CancelContext()
-        beginAsync(asyncContext:  [queue, cancelContext], self.appleRequest(ex, shouldSucceed: false, delay: 0.5))
+        beginAsync(context:  [queue, cancelContext], self.appleRequest(ex, shouldSucceed: false, delay: 0.5))
         cancelContext.timeout = 0.25
         waitForExpectations(timeout: 1)
     }
