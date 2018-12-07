@@ -28,6 +28,18 @@ public enum AsyncError: Error {
     case cancelled
 }
 
+extension Error {
+    public var isCancelled: Bool {
+        do {
+            throw self
+        } catch AsyncError.cancelled {
+            return true
+        } catch {
+            return false
+        }
+    }
+}
+
 /**
  The CancelContext serves to:
  - Cancel tasks
@@ -167,7 +179,11 @@ public class CancelContext: CancelToken {
         barrier.sync {
             error = cancelScopeStack.top?.error
             if error == nil {
-                fatalError("'makeCancelToken' may only be called from inside a 'suspendAsync' closure")
+                if let _: CancelContext = getCoroutineContext() {
+                    fatalError("'makeCancelToken' may only be called from inside a 'suspendAsync' closure")
+                } else {
+                    fatalError("'makeCancelToken' may only be called from inside a 'suspendAsync' closure, which in turn is inside a 'beginAsync' closure that includes a 'CancelContext' in its coroutine context")
+                }
             }
         }
         return CancelContext.CancelScope(context: self, tokenId: CancelContext.nextTokenId(), error: error)

@@ -14,6 +14,30 @@ import Foundation
 private var tlAsyncContext = ThreadLocal<Any?>(capturing: nil)
 private var tlAsyncSemaphore = ThreadLocal<DispatchSemaphore?>(capturing: nil)
 
+/// Capture the coroutine state for the current thread
+public struct CoroutineState {
+    let asyncContext: Any?
+    let asyncSemaphore: DispatchSemaphore?
+}
+
+/// 'getCoroutineState' and 'setCoroutineState' are used to copy the coroutine state to another thread.
+/// This is a workaround for the prototype and would not be necessary in the Swift language implementation.
+public func getCoroutineState()-> CoroutineState {
+    return CoroutineState(asyncContext: tlAsyncContext.inner.value, asyncSemaphore: tlAsyncSemaphore.inner.value)
+}
+
+/// 'getCoroutineState' and 'setCoroutineState' are used to copy the coroutine state to another thread.
+/// This is a workaround for the prototype and would not be necessary in the Swift language implementation.
+public func setCoroutineState(_ state: CoroutineState) {
+    tlAsyncContext.inner.value = state.asyncContext
+    tlAsyncSemaphore.inner.value = state.asyncSemaphore
+}
+
+public func clearCoroutineState() {
+    tlAsyncContext.inner.value = nil
+    tlAsyncSemaphore.inner.value = nil
+}
+
 /**
  Return a coroutime context matching the given type `T` by applying the following checks in sequential order:
  1. If the coroutine context matches type 'T', then it is returned
@@ -46,8 +70,9 @@ public func getCoroutineContext<T>() -> T? {
  runs through this array looking for a matching type.
  
  - Parameter asyncContext: the context to use for all encapsulated corotines
+ - Parameter error: invoked if 'body' throws an error
  */
-public func beginAsync(asyncContext: Any? = nil, _ body: @escaping () throws -> Void) rethrows {
+public func beginAsync(asyncContext: Any? = nil, error errorHandler: ((Error) -> ())? = nil, _ body: @escaping () throws -> Void) rethrows {
     let beginAsyncSemaphore = DispatchSemaphore(value: 0)
     var bodyError: Error?
     var beginAsyncReturned = false
@@ -96,10 +121,8 @@ public func beginAsync(asyncContext: Any? = nil, _ body: @escaping () throws -> 
         do {
             try body()
         } catch {
-            if beginAsyncReturned {
-                // Not sure where this error is supposed to go as this is unclear from the spec
-                print("beginAsync error: \(error)")
-            } else {
+            errorHandler?(error)
+            if !beginAsyncReturned {
                 bodyError = error
             }
         }
@@ -108,7 +131,7 @@ public func beginAsync(asyncContext: Any? = nil, _ body: @escaping () throws -> 
     beginAsyncSemaphore.wait()
     
     if let error = bodyError {
-        // Would like to rethrow the body error here but the compiler does not seem to allow for this
+        // ToDo: Would like to rethrow the body error here but the compiler does not seem to allow for this
         print("beginAsync initial error: \(error)")
         // throw error
     }
