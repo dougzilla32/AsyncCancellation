@@ -1,6 +1,6 @@
 ## Async/Await with Cancellation
 
-This project is a prototype demonstrating 'cancellation' and 'timeout' abilities for the upcoming async/await Swift language feature.  The async/await feature is described in ['Async/Await for Swift' by Chris Lattner and Joe Groff](https://gist.github.com/lattner/429b9070918248274f25b714dcfc7619) and further discussed in [Contextualizing async coroutines](https://forums.swift.org/t/contextualizing-async-coroutines/6588).  The addition of 'cancellation' and 'timeout' is proposed and discussed below.
+This project is an experimental implementation demonstrating 'cancellation' and 'timeout' abilities for the upcoming Async/Await Swift language feature.  This feature is described in ['Async/Await for Swift' by Chris Lattner and Joe Groff](https://gist.github.com/lattner/429b9070918248274f25b714dcfc7619) and further discussed in [Contextualizing async coroutines](https://forums.swift.org/t/contextualizing-async-coroutines/6588).  The addition of 'cancellation' and 'timeout' is proposed and discussed below.
 
 To try it out, clone this project and run it!  And run the tests to see if it is working properly!
 
@@ -12,9 +12,9 @@ In this proposal, the cancellation and timeout features are implemented using co
 * Tasks are manually added to the cancel context as they are created, and are automatically removed from the cancel context when their coroutine is resolved (i.e. the coroutine produces a result or an error).
 * The cancel context has a `cancel()` method that can be used to explicitly cancel all unresolved tasks.
 * The cancel context has a `timeout: TimeInterval` property for setting a timeout to cancel all unresolved tasks.
-* All unresolved tasks are immediately resolved with the error `AsyncError.cancelled` when `cancel()` is called on their cancel context.  Unwinding the task and task cleanup happen in the background after the cancellation error is thrown.
-* The cancel context is thread safe, therefore the same instance can be used in multiple calls to `beginAsync` (large granularity)
-* The cancel context can produce cancel tokens for fine granularity of cancellation and timeouts.  The cancel token can be used as a coroutine context, which will create a tree shaped cancellation structure (note: the cancel context is itself a cancel token)
+* When `cancel()` is called on a cancel context, all of its unresolved tasks are immediately resolved with the error `AsyncError.cancelled`.  Unwinding and cleanup for the task happen in the background after the cancellation error is thrown.
+* The cancel context is thread safe, therefore the same instance can be used in multiple calls to `beginAsync` (course granularity)
+* The cancel context can produce cancel tokens for finer granularity of cancellation and timeouts.  The cancel token can be used as a coroutine context, which will create a tree shaped cancellation structure (note: the cancel context is itself a cancel token)
 
 ### Examples
 
@@ -59,15 +59,21 @@ cancelContext.timeout = 30.0
 cancelContext.cancel()
 ```
 
-`main.swift` contains the image loading example from ['Async/Await for Swift' by Chris Lattner and Joe Groff](https://gist.github.com/lattner/429b9070918248274f25b714dcfc7619). 
+[`main.swift`](https://github.com/dougzilla32/AsyncCancellation/blob/master/Source/main.swift) contains the image loading example from ['Async/Await for Swift' by Chris Lattner and Joe Groff](https://gist.github.com/lattner/429b9070918248274f25b714dcfc7619).
 
-### CancelToken
+### Limitations
 
-... TODO: describe `CancelToken` error handling
+This implementation has a limitation where `suspendAsync` blocks the current thread until either `continutation` or `error` has been called.  According to the Async/Await proposal `suspendAsync` is supposed to allow the current thread to resume execution while any of its coroutine are waiting to be resolved.
 
-### Contextualizing async coroutines
+To implement `suspendAsync` properly would require either a custom preprocessor that rewrites the code or would require compiler support.  These is beyond the scope of this experimental implementation.
 
-The proposal for [Contextualizing async coroutines](https://forums.swift.org/t/contextualizing-async-coroutines/6588) is incorporated in this implementation.  During my attempt to use contexts with async coroutines, I discovered that it is desirable to allow multiple contexts with `beginAsync`.  Also, for nested `beginAsync` calls the contexts for the outer scopes should be preserved.  My take on this is the following:
+### Assumptions
+
+I made some assumptions about how coroutine contexts might work, and how to handle errors (such as cancellation) that are propagated up to `beginAsync`. These are described below:
+
+#### Contextualizing async coroutines
+
+The proposal for [Contextualizing async coroutines](https://forums.swift.org/t/contextualizing-async-coroutines/6588) is incorporated in this implementation.  I found that it is desirable to allow multiple contexts with `beginAsync`.  Also for nested `beginAsync` calls, the contexts for the outer scopes should be preserved.  My take on this is the following:
 
 * The coroutine context type is `Any`
 * Multiple contexts are combined into an array  `[Any]`
@@ -81,43 +87,15 @@ The proposal for [Contextualizing async coroutines](https://forums.swift.org/t/c
     5. If `new` is `[Any]`, then append `outer` to `new`
     6. Concatenate `new` and  `outer` as `[Any]`
 
-### Error handling for `beginAsync`
+#### Error handling for `beginAsync`
 
 Error handling for `beginAsync` is not fully specified in ['Async/Await for Swift' by Chris Lattner and Joe Groff](https://gist.github.com/lattner/429b9070918248274f25b714dcfc7619) .
 
-... TODO: describe `beginAsync` error handling
+To handle errors throw by the `body` parameter in the `beginAsync` function, I've added an optional error handler parameter to `beginAsync`.
 
-#### The original proposal includes the following primitives, which are implemented (as experimental code) in this project:
+### API
 
-```swift
-/// Begins an asynchronous coroutine, transferring control to `body` until it
-/// either suspends itself for the first time with `suspendAsync` or completes,
-/// at which point `beginAsync` returns. If the async process completes by
-/// throwing an error before suspending itself, `beginAsync` rethrows the error.
-func beginAsync(_ body: () async throws -> Void) rethrows -> Void
-
-/// Suspends the current asynchronous task and invokes `body` with the task's
-/// continuation closure. Invoking `continuation` will resume the coroutine
-/// by having `suspendAsync` return the value passed into the continuation.
-/// It is a fatal error for `continuation` to be invoked more than once.
-func suspendAsync<T>(
-  _ body: (_ continuation: @escaping (T) -> ()) -> ()
-) async -> T
-
-/// Suspends the current asynchronous task and invokes `body` with the task's
-/// continuation and failure closures. Invoking `continuation` will resume the
-/// coroutine by having `suspendAsync` return the value passed into the
-/// continuation. Invoking `error` will resume the coroutine by having
-/// `suspendAsync` throw the error passed into it. Only one of
-/// `continuation` and `error` may be called; it is a fatal error if both are
-/// called, or if either is called more than once.
-func suspendAsync<T>(
-  _ body: (_ continuation: @escaping (T) -> (),
-           _ error: @escaping (Error) -> ()) -> ()
-) async throws -> T
-```
-
-#### For 'cancellation' abilities the following changes and additions are proposed (and are experimentally implemented in this project):
+For 'cancellation' abilities the following changes and additions are proposed and are experimentally implemented in this project:
 
 ```swift
 /// Represents a generic asynchronous task
@@ -138,6 +116,7 @@ public enum AsyncError: Error {
     case cancelled
 }
 
+/// Shortcut to check for cancellation errors
 extension Error {
     public var isCancelled: Bool {
         do {
@@ -244,7 +223,7 @@ public func suspendAsync<T>(
     ) throws -> T
 ```
 
-#### This example code shows how to define URLSession.dataTask as a coroutine that supports cancellation:
+#### This example shows how to define URLSession.dataTask as a coroutine that supports cancellation:
 
 ```swift
 /// Add 'suspend' and 'resume' capabilities to CancelContext
@@ -278,7 +257,7 @@ extension URLSession {
 }
 ```
 
-#### This example demonstrates the `URLSessionTask.dataTask` coroutine with cancellation and timeouts:
+#### This example demonstrates usage of the `URLSessionTask.dataTask` coroutine including cancellation and timeout:
 
 ```swift
 import Foundation
@@ -310,7 +289,7 @@ cancelContext.timeout = 30.0
 cancelContext.cancel()
 ```
 
-#### Here is the image loading example from the original proposal, along with cancellation and timeout abilities:
+#### Here is the image loading example from the original Async/Await proposal, along with cancellation and timeout abilities (from [`main.swift`](https://github.com/dougzilla32/AsyncCancellation/blob/master/Source/main.swift)):
 
 ```swift
 /// For the purpose of this example, send a simple web request rather than loading actual image data
@@ -322,6 +301,7 @@ func loadWebResource(_ name: String) throws -> Data {
 }
 
 func decodeImage(_ profile: Data, _ data: Data) throws -> Image
+
 func dewarpAndCleanupImage(_ image : Image) async -> Image
 
 /// Image loading example
@@ -346,7 +326,7 @@ let error: (Error) -> () = { error in
 do {
     try beginAsync(context: [cancelContext, queue], error: error) {
         let result = try processImageData1a()
-        print("image result: \(result)")
+        print("Image result: \(result)")
     }
 } catch {
     // Error is handled by the beginAsync 'error' callback

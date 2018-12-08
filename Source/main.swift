@@ -50,12 +50,10 @@ appleCancelContext.timeout = 30.0
 appleCancelContext.suspend()
 
 
-/** ************************************************************************ */
-
-//
-// Image loading example from 'Async/Await for Swift' by Chris Lattner and Joe Groff
-// https://gist.github.com/dougzilla32/ce47a72067f9344742e10020ad4c8c41
-//
+/***********************************************************************************
+ Image loading example from 'Async/Await for Swift' by Chris Lattner and Joe Groff
+ https://gist.github.com/dougzilla32/ce47a72067f9344742e10020ad4c8c41
+ ***********************************************************************************/
 
 /// For the purpose of this example, send a simple web request rather than loading actual image data
 func loadWebResource(_ name: String) throws -> String {

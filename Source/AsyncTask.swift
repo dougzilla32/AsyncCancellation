@@ -28,6 +28,7 @@ public enum AsyncError: Error {
     case cancelled
 }
 
+/// Shortcut to check for cancellation errors
 extension Error {
     public var isCancelled: Bool {
         do {
