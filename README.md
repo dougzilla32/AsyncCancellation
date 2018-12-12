@@ -61,7 +61,7 @@ cancelContext.cancel()
 
 [`main.swift`](https://github.com/dougzilla32/AsyncCancellation/blob/master/Source/main.swift) contains the image loading example from ['Async/Await for Swift' by Chris Lattner and Joe Groff](https://gist.github.com/lattner/429b9070918248274f25b714dcfc7619).
 
-### Limitations
+### Prototype Limitations
 
 This implementation has a limitation where `suspendAsync` blocks the current thread until either `continutation` or `error` has been called.  According to the Async/Await proposal `suspendAsync` is supposed to allow the current thread to resume execution while any of its coroutine are waiting to be resolved.
 
@@ -228,8 +228,8 @@ public func suspendAsync<T>(
 ```swift
 /// Add 'suspend' and 'resume' capabilities to CancelContext
 extension CancelContext {
-    func suspend() { tasks.forEach { ($0.task as? URLSessionTask)?.suspend() } }
-    func resume() { tasks.forEach { ($0.task as? URLSessionTask)?.resume() } }
+    func suspendURLSessionTasks() { tasks.forEach { ($0.task as? URLSessionTask)?.suspend() } }
+    func resumeURLSessionTasks() { tasks.forEach { ($0.task as? URLSessionTask)?.resume() } }
 }
 
 /// Extend URLSessionTask to be an AsyncTask

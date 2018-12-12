@@ -47,7 +47,7 @@ appleCancelContext.timeout = 30.0
 
 // Uncomment to see cancellation behavior
 // appleCancelContext.cancel()
-appleCancelContext.suspend()
+appleCancelContext.suspendURLSessionTasks()
 
 
 /***********************************************************************************

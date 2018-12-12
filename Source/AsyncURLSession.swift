@@ -9,8 +9,8 @@ import Foundation
 
 /// Add 'suspend' and 'resume' capabilities to CancelContext
 extension CancelContext {
-    func suspend() { tasks.forEach { ($0.task as? URLSessionTask)?.suspend() } }
-    func resume() { tasks.forEach { ($0.task as? URLSessionTask)?.resume() } }
+    func suspendURLSessionTasks() { tasks.forEach { ($0.task as? URLSessionTask)?.suspend() } }
+    func resumeURLSessionTasks() { tasks.forEach { ($0.task as? URLSessionTask)?.resume() } }
 }
 
 /// Extend URLSessionTask to be an AsyncTask

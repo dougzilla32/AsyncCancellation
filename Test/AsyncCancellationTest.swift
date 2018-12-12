@@ -57,7 +57,7 @@ class AsyncCancellationTest: XCTestCase {
     func testURLSessionVanilla() {
         let ex = expectation(description: "")
         beginAsync(appleRequest(ex, shouldSucceed: true))
-        waitForExpectations(timeout: 1)
+        waitForExpectations(timeout: 5)
     }
     
     func testURLSessionSuccess() {
@@ -68,7 +68,7 @@ class AsyncCancellationTest: XCTestCase {
         queue.asyncAfter(deadline: DispatchTime.now() + 5.0) {
             cancelContext.cancel()
         }
-        waitForExpectations(timeout: 1)
+        waitForExpectations(timeout: 5)
     }
     
     func testURLSessionCancellation() {
