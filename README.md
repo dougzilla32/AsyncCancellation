@@ -1,6 +1,6 @@
 ## Async/Await with Cancellation
 
-This is an experimental implementation of the [Proposal to add cancellation abilities for Async/Await](https://forums.swift.org/t/proposal-to-add-cancellation-abilities-for-async-await/18419) for the Swift language.
+This is an experimental implementation of the [Proposal to add cancellation abilities for Async/Await](https://forums.swift.org/t/proposal-to-add-cancellation-abilities-for-async-await/18419/12) for the Swift language.
 
 This project demonstrates 'cancellation' and 'timeout' abilities for Async/Await.  The Async/Await feature is described in ['Async/Await for Swift' by Chris Lattner and Joe Groff](https://gist.github.com/lattner/429b9070918248274f25b714dcfc7619) and further discussed in [Contextualizing async coroutines](https://forums.swift.org/t/contextualizing-async-coroutines/6588).  The addition of 'cancellation' and 'timeout' is proposed and discussed below.
 
