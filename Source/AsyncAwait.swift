@@ -1,6 +1,6 @@
 //
 //  AsyncAwait.swift
-//  AsyncTest
+//  AsyncCancellation
 //
 //  Created by Doug on 10/29/18.
 //
@@ -148,7 +148,7 @@ public func beginAsync(context newContext: Any? = nil, error errorHandler: ((Err
 }
 
 /**
- Suspends the current asynchronous task and invokes `body` with the task's
+ Suspends the current coroutine and invokes `body` with the coroutines's
  continuation closure. Invoking `continuation` will resume the coroutine
  by having `suspendAsync` return the value passed into the continuation.
  It is a fatal error for `continuation` to be invoked more than once.
@@ -182,18 +182,27 @@ public func suspendAsync<T>(
 }
 
 /**
- Suspends the current asynchronous task and invokes `body` with the task's
- continuation and failure closures. Invoking `continuation` will resume the
- coroutine by having `suspendAsync` return the value passed into the
- continuation. Invoking `error` will resume the coroutine by having
- `suspendAsync` throw the error passed into it. Only one of
- `continuation` and `error` may be called; it is a fatal error if both are
- called, or if either is called more than once.
+ Suspends the current coroutine and invokes `body` with
+ a continuation closure and a failure closure. The coroutine is resumed
+ when either the continuation closure or the failure closure is invoked
+ by `body`.  If `body` invokes the continuation closure then `suspendAsync`
+ will return the provided value.  And if `body` invokes the failure closure
+ then `suspendAsync` will throw the provided error.
+ 
+ Only one of either the continuation closure or the failure closure may be
+ called. It is a fatal error if both are called, or if either is called more
+ than once.
  
  Code inside `body` can support cancellation as follows:
  ```swift
- // 'task' conforms to 'AsyncTask'
- (getCoroutineContext() as CancelToken?)?.add(task: task)
+ let cancellable: Cancellable = myCancellableTask()
+ 
+ ...
+ 
+ // Add `cancellable` to the `CancelToken` coroutine context
+ if let cancelToken: CancelToken = getCoroutineContext() {
+   cancelToken.add(cancellable: cancellable)
+ }
  ```
  */
 public func suspendAsync<T>(
@@ -229,7 +238,7 @@ public func suspendAsync<T>(
         
         theResult = result
 
-        // Remove resolved tasks from the cancel context and clear the current cancel token
+        // Remove resolved cancellables from the cancel context and clear the current cancel token
         cancelContext?.removeAll(id: cancelTokenId)
 
         suspendAsyncSemaphore.signal()
@@ -244,7 +253,7 @@ public func suspendAsync<T>(
         }
 
         if errorResult == nil {
-            // Remove resolved tasks from the cancel context and clear the current cancel token
+            // Remove resolved cancellables from the cancel context and clear the current cancel token
             cancelContext?.removeAll(id: cancelTokenId)
         }
 

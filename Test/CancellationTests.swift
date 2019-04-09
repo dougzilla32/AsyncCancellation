@@ -1,6 +1,6 @@
 //
-//  AsyncCancellationTest.swift
-//  AsyncCancellationTest
+//  CancellationTests.swift
+//  AsyncCancellationTests
 //
 //  Created by Doug on 10/29/18.
 //  Copyright © 2018 Doug. All rights reserved.
@@ -9,12 +9,7 @@
 import XCTest
 import Foundation
 
-class AsyncCancellationTest: XCTestCase {
-
-    override func setUp() { }
-
-    override func tearDown() { }
-    
+class CancellationTests: XCTestCase {
     func appleRequest() throws -> String {
         let session = URLSession(configuration: .default)
         let request = URLRequest(url: URL(string: "https://itunes.apple.com/search")!)
@@ -83,7 +78,7 @@ class AsyncCancellationTest: XCTestCase {
     func testStuff() {
         class Stuff { }
         
-        class StuffTask: AsyncTask {
+        class StuffTask: Cancellable {
             func cancel() {
                 isCancelled = true
             }
@@ -102,7 +97,7 @@ class AsyncCancellationTest: XCTestCase {
             let context = CancelContext()
             try beginAsync(context: context) {
                 let stuff = /* await */ try suspendAsync { continuation, error in
-                    (getCoroutineContext() as CancelToken?)?.add(task: getStuff(completion: continuation, error: error))
+                    (getCoroutineContext() as CancelToken?)?.add(cancellable: getStuff(completion: continuation, error: error))
                 }
                 print("Stuff result: \(stuff)")
                 ex.fulfill()
@@ -134,9 +129,13 @@ class AsyncCancellationTest: XCTestCase {
         let exCancel: XCTestExpectation?
         let exIsCancelled: XCTestExpectation?
         
-        func add(task: AsyncTask) {
+        func add(cancellable: Cancellable) {
             exAdd?.fulfill()
-            token.add(task: task)
+            token.add(cancellable: cancellable)
+        }
+        
+        func cancellables<T: Cancellable>() -> [T] {
+            return token.cancellables()
         }
         
         func cancel() {
@@ -178,7 +177,7 @@ class AsyncCancellationTest: XCTestCase {
                             continuation((request, response, data))
                         }
                     }
-                    token.add(task: task)
+                    token.add(cancellable: task)
                     task.resume()
                     
                     token.cancel()
@@ -254,7 +253,7 @@ class AsyncCancellationTest: XCTestCase {
                         continuation(42)
                     }
                     DispatchQueue.global().async(execute: workItem)
-                    (getCoroutineContext() as CancelToken?)?.add(task: workItem)
+                    (getCoroutineContext() as CancelToken?)?.add(cancellable: workItem)
                 }
                 if theMeaningOfLife == 42 {
                     ex.fulfill()

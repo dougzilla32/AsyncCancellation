@@ -9,20 +9,22 @@
 /* Begin PBXBuildFile section */
 		911EEC86218A9FAD00A90989 /* Future.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911EEC85218A9FAD00A90989 /* Future.swift */; };
 		911EEC87218A9FAD00A90989 /* Future.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911EEC85218A9FAD00A90989 /* Future.swift */; };
-		911EEC89218AA60B00A90989 /* AsyncDispatchWorkItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911EEC88218AA60B00A90989 /* AsyncDispatchWorkItem.swift */; };
-		911EEC8A218AA60B00A90989 /* AsyncDispatchWorkItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911EEC88218AA60B00A90989 /* AsyncDispatchWorkItem.swift */; };
+		911EEC89218AA60B00A90989 /* CancellableDispatchWorkItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911EEC88218AA60B00A90989 /* CancellableDispatchWorkItem.swift */; };
+		911EEC8A218AA60B00A90989 /* CancellableDispatchWorkItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911EEC88218AA60B00A90989 /* CancellableDispatchWorkItem.swift */; };
 		913BF55B21B90A850090CF58 /* Stack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 913BF55A21B90A850090CF58 /* Stack.swift */; };
 		913BF55C21B90C800090CF58 /* Stack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 913BF55A21B90A850090CF58 /* Stack.swift */; };
 		91BA1D45218949250021140D /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D44218949250021140D /* main.swift */; };
-		91BA1D52218949440021140D /* AsyncCancellationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D51218949440021140D /* AsyncCancellationTest.swift */; };
+		91BA1D52218949440021140D /* CancellationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D51218949440021140D /* CancellationTests.swift */; };
 		91BA1D5B2189498C0021140D /* AsyncAwait.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D572189498C0021140D /* AsyncAwait.swift */; };
 		91BA1D5C2189498C0021140D /* AsyncAwait.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D572189498C0021140D /* AsyncAwait.swift */; };
-		91BA1D5D2189498C0021140D /* AsyncURLSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D582189498C0021140D /* AsyncURLSession.swift */; };
-		91BA1D5E2189498C0021140D /* AsyncURLSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D582189498C0021140D /* AsyncURLSession.swift */; };
-		91BA1D5F2189498C0021140D /* AsyncTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D592189498C0021140D /* AsyncTask.swift */; };
-		91BA1D602189498C0021140D /* AsyncTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D592189498C0021140D /* AsyncTask.swift */; };
+		91BA1D5D2189498C0021140D /* CancellableURLSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D582189498C0021140D /* CancellableURLSession.swift */; };
+		91BA1D5E2189498C0021140D /* CancellableURLSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D582189498C0021140D /* CancellableURLSession.swift */; };
+		91BA1D5F2189498C0021140D /* Cancellable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D592189498C0021140D /* Cancellable.swift */; };
+		91BA1D602189498C0021140D /* Cancellable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D592189498C0021140D /* Cancellable.swift */; };
 		91BA1D612189498C0021140D /* Threadly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D5A2189498C0021140D /* Threadly.swift */; };
 		91BA1D622189498C0021140D /* Threadly.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91BA1D5A2189498C0021140D /* Threadly.swift */; };
+		91C04FE1225BE91A00371954 /* Examples.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91C04FE0225BE91A00371954 /* Examples.swift */; };
+		91CCCDCD21BF5B4D00BAF6BE /* CancellableProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CCCDCC21BF5B4D00BAF6BE /* CancellableProgress.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -39,18 +41,20 @@
 
 /* Begin PBXFileReference section */
 		911EEC85218A9FAD00A90989 /* Future.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Future.swift; sourceTree = "<group>"; };
-		911EEC88218AA60B00A90989 /* AsyncDispatchWorkItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncDispatchWorkItem.swift; sourceTree = "<group>"; };
+		911EEC88218AA60B00A90989 /* CancellableDispatchWorkItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancellableDispatchWorkItem.swift; sourceTree = "<group>"; };
 		913BF55A21B90A850090CF58 /* Stack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stack.swift; sourceTree = "<group>"; };
 		91BA1D41218949250021140D /* AsyncCancellation */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = AsyncCancellation; sourceTree = BUILT_PRODUCTS_DIR; };
 		91BA1D44218949250021140D /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		91BA1D4F218949440021140D /* AsyncCancellationTest.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AsyncCancellationTest.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		91BA1D51218949440021140D /* AsyncCancellationTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncCancellationTest.swift; sourceTree = "<group>"; };
+		91BA1D4F218949440021140D /* AsyncCancellationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AsyncCancellationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		91BA1D51218949440021140D /* CancellationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancellationTests.swift; sourceTree = "<group>"; };
 		91BA1D53218949440021140D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		91BA1D572189498C0021140D /* AsyncAwait.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AsyncAwait.swift; sourceTree = "<group>"; };
-		91BA1D582189498C0021140D /* AsyncURLSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AsyncURLSession.swift; sourceTree = "<group>"; };
-		91BA1D592189498C0021140D /* AsyncTask.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AsyncTask.swift; sourceTree = "<group>"; };
+		91BA1D582189498C0021140D /* CancellableURLSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CancellableURLSession.swift; sourceTree = "<group>"; };
+		91BA1D592189498C0021140D /* Cancellable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Cancellable.swift; sourceTree = "<group>"; };
 		91BA1D5A2189498C0021140D /* Threadly.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Threadly.swift; sourceTree = "<group>"; };
 		91BA1D63218970E00021140D /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		91C04FE0225BE91A00371954 /* Examples.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Examples.swift; sourceTree = "<group>"; };
+		91CCCDCC21BF5B4D00BAF6BE /* CancellableProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancellableProgress.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,7 +89,7 @@
 			isa = PBXGroup;
 			children = (
 				91BA1D41218949250021140D /* AsyncCancellation */,
-				91BA1D4F218949440021140D /* AsyncCancellationTest.xctest */,
+				91BA1D4F218949440021140D /* AsyncCancellationTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -94,10 +98,11 @@
 			isa = PBXGroup;
 			children = (
 				91BA1D44218949250021140D /* main.swift */,
-				91BA1D592189498C0021140D /* AsyncTask.swift */,
+				91BA1D592189498C0021140D /* Cancellable.swift */,
 				91BA1D572189498C0021140D /* AsyncAwait.swift */,
-				911EEC88218AA60B00A90989 /* AsyncDispatchWorkItem.swift */,
-				91BA1D582189498C0021140D /* AsyncURLSession.swift */,
+				911EEC88218AA60B00A90989 /* CancellableDispatchWorkItem.swift */,
+				91CCCDCC21BF5B4D00BAF6BE /* CancellableProgress.swift */,
+				91BA1D582189498C0021140D /* CancellableURLSession.swift */,
 				911EEC85218A9FAD00A90989 /* Future.swift */,
 				913BF55A21B90A850090CF58 /* Stack.swift */,
 				91BA1D5A2189498C0021140D /* Threadly.swift */,
@@ -108,7 +113,8 @@
 		91BA1D50218949440021140D /* Test */ = {
 			isa = PBXGroup;
 			children = (
-				91BA1D51218949440021140D /* AsyncCancellationTest.swift */,
+				91C04FE0225BE91A00371954 /* Examples.swift */,
+				91BA1D51218949440021140D /* CancellationTests.swift */,
 				91BA1D53218949440021140D /* Info.plist */,
 			);
 			path = Test;
@@ -134,9 +140,9 @@
 			productReference = 91BA1D41218949250021140D /* AsyncCancellation */;
 			productType = "com.apple.product-type.tool";
 		};
-		91BA1D4E218949440021140D /* AsyncCancellationTest */ = {
+		91BA1D4E218949440021140D /* AsyncCancellationTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 91BA1D54218949440021140D /* Build configuration list for PBXNativeTarget "AsyncCancellationTest" */;
+			buildConfigurationList = 91BA1D54218949440021140D /* Build configuration list for PBXNativeTarget "AsyncCancellationTests" */;
 			buildPhases = (
 				91BA1D4B218949440021140D /* Sources */,
 				91BA1D4C218949440021140D /* Frameworks */,
@@ -146,9 +152,9 @@
 			);
 			dependencies = (
 			);
-			name = AsyncCancellationTest;
+			name = AsyncCancellationTests;
 			productName = AsyncCancellationTest;
-			productReference = 91BA1D4F218949440021140D /* AsyncCancellationTest.xctest */;
+			productReference = 91BA1D4F218949440021140D /* AsyncCancellationTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -163,9 +169,11 @@
 				TargetAttributes = {
 					91BA1D40218949250021140D = {
 						CreatedOnToolsVersion = 10.0;
+						LastSwiftMigration = 1020;
 					};
 					91BA1D4E218949440021140D = {
 						CreatedOnToolsVersion = 10.0;
+						LastSwiftMigration = 1020;
 					};
 				};
 			};
@@ -175,6 +183,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				Base,
 			);
 			mainGroup = 91BA1D38218949250021140D;
 			productRefGroup = 91BA1D42218949250021140D /* Products */;
@@ -182,7 +191,7 @@
 			projectRoot = "";
 			targets = (
 				91BA1D40218949250021140D /* AsyncCancellation */,
-				91BA1D4E218949440021140D /* AsyncCancellationTest */,
+				91BA1D4E218949440021140D /* AsyncCancellationTests */,
 			);
 		};
 /* End PBXProject section */
@@ -202,14 +211,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				911EEC89218AA60B00A90989 /* AsyncDispatchWorkItem.swift in Sources */,
+				911EEC89218AA60B00A90989 /* CancellableDispatchWorkItem.swift in Sources */,
 				911EEC86218A9FAD00A90989 /* Future.swift in Sources */,
 				91BA1D45218949250021140D /* main.swift in Sources */,
 				91BA1D612189498C0021140D /* Threadly.swift in Sources */,
 				913BF55B21B90A850090CF58 /* Stack.swift in Sources */,
 				91BA1D5B2189498C0021140D /* AsyncAwait.swift in Sources */,
-				91BA1D5D2189498C0021140D /* AsyncURLSession.swift in Sources */,
-				91BA1D5F2189498C0021140D /* AsyncTask.swift in Sources */,
+				91CCCDCD21BF5B4D00BAF6BE /* CancellableProgress.swift in Sources */,
+				91BA1D5D2189498C0021140D /* CancellableURLSession.swift in Sources */,
+				91BA1D5F2189498C0021140D /* Cancellable.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -218,13 +228,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				913BF55C21B90C800090CF58 /* Stack.swift in Sources */,
-				911EEC8A218AA60B00A90989 /* AsyncDispatchWorkItem.swift in Sources */,
+				911EEC8A218AA60B00A90989 /* CancellableDispatchWorkItem.swift in Sources */,
 				911EEC87218A9FAD00A90989 /* Future.swift in Sources */,
-				91BA1D52218949440021140D /* AsyncCancellationTest.swift in Sources */,
+				91BA1D52218949440021140D /* CancellationTests.swift in Sources */,
 				91BA1D622189498C0021140D /* Threadly.swift in Sources */,
 				91BA1D5C2189498C0021140D /* AsyncAwait.swift in Sources */,
-				91BA1D5E2189498C0021140D /* AsyncURLSession.swift in Sources */,
-				91BA1D602189498C0021140D /* AsyncTask.swift in Sources */,
+				91BA1D5E2189498C0021140D /* CancellableURLSession.swift in Sources */,
+				91C04FE1225BE91A00371954 /* Examples.swift in Sources */,
+				91BA1D602189498C0021140D /* Cancellable.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -351,7 +362,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
@@ -360,7 +371,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
@@ -377,7 +388,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.doug.AsyncCancellationTest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
@@ -394,7 +405,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.doug.AsyncCancellationTest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
@@ -419,7 +430,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		91BA1D54218949440021140D /* Build configuration list for PBXNativeTarget "AsyncCancellationTest" */ = {
+		91BA1D54218949440021140D /* Build configuration list for PBXNativeTarget "AsyncCancellationTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				91BA1D55218949440021140D /* Debug */,

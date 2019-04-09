@@ -29,8 +29,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "91BA1D4E218949440021140D"
-               BuildableName = "AsyncCancellationTest.xctest"
-               BlueprintName = "AsyncCancellationTest"
+               BuildableName = "AsyncCancellationTests.xctest"
+               BlueprintName = "AsyncCancellationTests"
                ReferencedContainer = "container:AsyncCancellation.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -49,8 +49,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "91BA1D4E218949440021140D"
-               BuildableName = "AsyncCancellationTest.xctest"
-               BlueprintName = "AsyncCancellationTest"
+               BuildableName = "AsyncCancellationTests.xctest"
+               BlueprintName = "AsyncCancellationTests"
                ReferencedContainer = "container:AsyncCancellation.xcodeproj">
             </BuildableReference>
             <LocationScenarioReference
