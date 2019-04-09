@@ -7,19 +7,20 @@
 
 import Foundation
 
-/// Extend URLSessionTask to be an AsyncTask
+/// Extend `URLSessionTask` to be `Cancellable`
 extension URLSessionTask: Cancellable {
     public var isCancelled: Bool {
         return state == .canceling || (error as NSError?)?.code == NSURLErrorCancelled
     }
 }
 
+/// Add suspend and resume capabilities to `CancelToken`
 extension CancelToken {
-    var urlSessionTasks: [URLSessionTask] { return cancellables() }
+    var tasks: [URLSessionTask] { return cancellables() }
 
-    func suspendTasks() { urlSessionTasks.forEach { $0.suspend() } }
+    func suspendTasks() { tasks.forEach { $0.suspend() } }
 
-    func resumeTasks() { urlSessionTasks.forEach { $0.resume() } }
+    func resumeTasks() { tasks.forEach { $0.resume() } }
 }
 
 /// Add async version of dataTask(with:) which uses suspendAsync to handle the callback

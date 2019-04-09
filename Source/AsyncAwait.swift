@@ -200,7 +200,7 @@ public func suspendAsync<T>(
  
  Code inside `body` can support cancellation as follows:
  ```swift
- let cancellable: Cancellable = myCancellableTask()
+ let cancellable: Cancellable = MyCancellableTask()
  
  ...
  

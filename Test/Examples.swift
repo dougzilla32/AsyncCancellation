@@ -26,7 +26,7 @@ class Examples: XCTestCase {
         }
 
         // Execute the URLSession example
-        let appleCancelContext = CancelContext()
+        let cancelContext = CancelContext()
         let appleError: (Error) -> () = { error in
             print("Apple search error: \(error)")
             XCTFail()
@@ -34,7 +34,7 @@ class Examples: XCTestCase {
 
         let ex = expectation(description: "Apple search successful")
         do {
-            try beginAsync(context: appleCancelContext, error: appleError) {
+            try beginAsync(context: cancelContext, error: appleError) {
                 let result = try performAppleSearch()
                 print("Apple search result: \(result)")
                 ex.fulfill()
@@ -45,11 +45,13 @@ class Examples: XCTestCase {
         }
 
         /// Set a timeout (seconds) to prevent hangs
-        appleCancelContext.timeout = 30.0
+        cancelContext.timeout = 30.0
 
         // Uncomment to see cancellation behavior
-        // appleCancelContext.cancel()
-        appleCancelContext.suspendTasks()
+        // cancelContext.cancel()
+        
+        // Uncomment to see suspend behavior
+        // cancelContext.suspendTasks()
 
         waitForExpectations(timeout: 5)
     }
@@ -118,14 +120,14 @@ class Examples: XCTestCase {
 
         /// Execute the image loading example
         let queue = DispatchQueue.global(qos: .default)
-        let imageCancelContext = CancelContext()
+        let cancelContext = CancelContext()
         let imageError: (Error) -> () = { error in
             print("Image loading error: \(error)")
         }
 
         let ex = expectation(description: "Image loaded successfully")
         do {
-            try beginAsync(context: [imageCancelContext, queue], error: imageError) {
+            try beginAsync(context: [cancelContext, queue], error: imageError) {
                 let result = try processImageData1a()
                 print("image result: \(result)")
                 ex.fulfill()
@@ -136,10 +138,10 @@ class Examples: XCTestCase {
         }
 
         /// Set a timeout (seconds) to prevent hangs
-        imageCancelContext.timeout = 30.0
+        cancelContext.timeout = 30.0
 
         // Uncomment to see cancellation behavior
-        // imageCancelContext.cancel()
+        // cancelContext.cancel()
 
         waitForExpectations(timeout: 5)
     }

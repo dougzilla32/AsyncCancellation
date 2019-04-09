@@ -27,13 +27,13 @@ func appleRequestExample() {
     }
 
     // Execute the URLSession example
-    let appleCancelContext = CancelContext()
+    let cancelContext = CancelContext()
     let appleError: (Error) -> () = { error in
         print("Apple search error: \(error)")
     }
 
     do {
-        try beginAsync(context: appleCancelContext, error: appleError) {
+        try beginAsync(context: cancelContext, error: appleError) {
             let result = try performAppleSearch()
             print("Apple search result: \(result)")
         }
@@ -43,11 +43,13 @@ func appleRequestExample() {
     }
 
     /// Set a timeout (seconds) to prevent hangs
-    appleCancelContext.timeout = 30.0
+    cancelContext.timeout = 30.0
 
     // Uncomment to see cancellation behavior
-    // appleCancelContext.cancel()
-    appleCancelContext.suspendTasks()
+    // cancelContext.cancel()
+
+    // Uncomment to see suspend behavior
+    // cancelContext.suspendTasks()
 }
 
 appleRequestExample()
@@ -115,13 +117,13 @@ func imageLoadingExample() {
 
     /// Execute the image loading example
     let queue = DispatchQueue.global(qos: .default)
-    let imageCancelContext = CancelContext()
+    let cancelContext = CancelContext()
     let imageError: (Error) -> () = { error in
         print("Image loading error: \(error)")
     }
 
     do {
-        try beginAsync(context: [imageCancelContext, queue], error: imageError) {
+        try beginAsync(context: [cancelContext, queue], error: imageError) {
             let result = try processImageData1a()
             print("Image result: \(result)")
         }
@@ -130,10 +132,10 @@ func imageLoadingExample() {
     }
 
     /// Set a timeout (seconds) to prevent hangs
-    imageCancelContext.timeout = 30.0
+    cancelContext.timeout = 30.0
 
     // Uncomment to see cancellation behavior
-    // imageCancelContext.cancel()
+    // cancelContext.cancel()
 }
 
 imageLoadingExample()

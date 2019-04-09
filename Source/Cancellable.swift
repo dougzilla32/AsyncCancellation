@@ -7,22 +7,26 @@
 
 import Foundation
 
-/// Cancellable tasks that conform to this protocol can be added to a CancelContext
+/// `Cancellable` tasks that conform to this protocol can be added to a `CancelContext`
 public protocol Cancellable {
     func cancel()
 
     var isCancelled: Bool { get }
 }
 
-/// CancelToken determines a cancellation scope
+/// The `CancelToken` determines a cancellation scope within a `CancelContext`
 public protocol CancelToken {
-    func add(cancellable: Cancellable)
-
-    func cancellables<T: Cancellable>() -> [T]
-
+    /// Cancel all unresolved cancellables associated with this token
     func cancel()
 
+    /// Returns true if all cancellables associated with this token are either cancelled or resolved
     var isCancelled: Bool { get }
+
+    /// Add a cancellable marked with this token to the associated cancel context
+    func add(cancellable: Cancellable)
+
+    /// The list of unresolved cancellables conforming to type 'T' and marked with this token for the associated cancel context
+    func cancellables<T: Cancellable>() -> [T]
 }
 
 /// Cancellation error
@@ -44,7 +48,7 @@ extension Error {
 }
 
 /**
- The CancelContext serves to:
+ The `CancelContext` serves to:
  - Track a set of cancellables, providing the ability to cancel the set from any thread at any time
  - Provides cancel tokens (`CancelToken`) for finer grained control over cancellation scope
  - Provide the current list of cancellables, allowing extensions of `CancelContext` to invoke other methods by casting
@@ -161,31 +165,6 @@ public class CancelContext: CancelToken {
         return true
     }
 
-    /// The list of unresolved cancellables conforming to type 'T' for this cancel context
-    public func cancellables<T: Cancellable>() -> [T] {
-        var cItems: [T] = []
-        barrier.sync {
-            for c in cancellableItems {
-                if let t = c.cancellable as? T {
-                    cItems.append(t)
-                }
-            }
-        }
-        return cItems
-    }
-
-    private func cancellables<T: Cancellable>(tokenId: UInt) -> [T] {
-        var cItems: [T] = []
-        barrier.sync {
-            for c in cancellableItems where c.tokenId == tokenId {
-                if let t = c.cancellable as? T {
-                    cItems.append(t)
-                }
-            }
-        }
-        return cItems
-    }
-
     /// Add a cancellable to the cancel context
     public func add(cancellable: Cancellable) {
         guard let scope = cancelScopeStack.top else {
@@ -215,6 +194,31 @@ public class CancelContext: CancelToken {
                 item.tokenId != id
             }
         }
+    }
+
+    /// The list of unresolved cancellables conforming to type 'T' for this cancel context
+    public func cancellables<T: Cancellable>() -> [T] {
+        var cItems: [T] = []
+        barrier.sync {
+            for c in cancellableItems {
+                if let t = c.cancellable as? T {
+                    cItems.append(t)
+                }
+            }
+        }
+        return cItems
+    }
+
+    private func cancellables<T: Cancellable>(tokenId: UInt) -> [T] {
+        var cItems: [T] = []
+        barrier.sync {
+            for c in cancellableItems where c.tokenId == tokenId {
+                if let t = c.cancellable as? T {
+                    cItems.append(t)
+                }
+            }
+        }
+        return cItems
     }
 
     /// Create a token that can be used to associate a cancellable with this context, and can be used
