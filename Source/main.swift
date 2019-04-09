@@ -15,7 +15,7 @@ func appleRequestExample() {
     //
     // URLSession example
     //
-    
+
     func performAppleSearch() /* async */ throws -> String {
         let urlSession = URLSession(configuration: .default)
         let request = URLRequest(url: URL(string: "https://itunes.apple.com/search")!)
@@ -25,13 +25,13 @@ func appleRequestExample() {
         }
         throw WebResourceError.invalidResult
     }
-    
+
     // Execute the URLSession example
     let appleCancelContext = CancelContext()
     let appleError: (Error) -> () = { error in
         print("Apple search error: \(error)")
     }
-    
+
     do {
         try beginAsync(context: appleCancelContext, error: appleError) {
             let result = try performAppleSearch()
@@ -41,10 +41,10 @@ func appleRequestExample() {
     } catch {
         // Error is handled by the beginAsync 'error' callback
     }
-    
+
     /// Set a timeout (seconds) to prevent hangs
     appleCancelContext.timeout = 30.0
-    
+
     // Uncomment to see cancellation behavior
     // appleCancelContext.cancel()
     appleCancelContext.suspendTasks()
@@ -57,7 +57,7 @@ func imageLoadingExample() {
      Image loading example from 'Async/Await for Swift' by Chris Lattner and Joe Groff
      https://gist.github.com/dougzilla32/ce47a72067f9344742e10020ad4c8c41
      ***********************************************************************************/
-    
+
     /// For the purpose of this example, send a simple web request rather than loading actual image data
     func loadWebResource(_ name: String) throws -> String {
         let urlSession = URLSession(configuration: .default)
@@ -68,7 +68,7 @@ func imageLoadingExample() {
         }
         throw WebResourceError.invalidResult
     }
-    
+
     /// For the purpose of this example, concat two strings in another thread rather than decoding image data
     func decodeImage(_ profile: String, _ data: String) throws -> String {
         return /* await */ try suspendAsync { continuation, error in
@@ -83,7 +83,7 @@ func imageLoadingExample() {
             }
         }
     }
-    
+
     /// For the purpose of this example, condense all the whitespace in the 'image' string
     func dewarpAndCleanupImage(_ image: String) throws -> String {
         return /* await */ try suspendAsync { continuation, error in
@@ -100,26 +100,26 @@ func imageLoadingExample() {
             }
         }
     }
-    
+
     /// Image loading example
     func processImageData1a() /* async */ throws -> String {
-        let dataResource  = Future { /* await */ try loadWebResource("dataprofile.txt") }
+        let dataResource = Future { /* await */ try loadWebResource("dataprofile.txt") }
         let imageResource = Future { /* await */ try loadWebResource("imagedata.dat") }
-        
+
         // ... other stuff can go here to cover load latency...
-        
-        let imageTmp    = /* await */ try decodeImage(try dataResource.get(), try imageResource.get())
+
+        let imageTmp = /* await */ try decodeImage(try dataResource.get(), try imageResource.get())
         let imageResult = /* await */ try dewarpAndCleanupImage(imageTmp)
         return imageResult
     }
-    
+
     /// Execute the image loading example
     let queue = DispatchQueue.global(qos: .default)
     let imageCancelContext = CancelContext()
     let imageError: (Error) -> () = { error in
         print("Image loading error: \(error)")
     }
-    
+
     do {
         try beginAsync(context: [imageCancelContext, queue], error: imageError) {
             let result = try processImageData1a()
@@ -128,10 +128,10 @@ func imageLoadingExample() {
     } catch {
         // Error is handled by the beginAsync 'error' callback
     }
-    
+
     /// Set a timeout (seconds) to prevent hangs
     imageCancelContext.timeout = 30.0
-    
+
     // Uncomment to see cancellation behavior
     // imageCancelContext.cancel()
 }

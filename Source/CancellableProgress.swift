@@ -7,11 +7,11 @@
 
 import Foundation
 
-extension Progress: Cancellable { }
+extension Progress: Cancellable {}
 
 extension CancelToken {
     var progressables: [Progress] { return cancellables() }
-    
+
     func pauseProgress() { progressables.forEach { $0.pause() } }
 
     func resumeProgress() { progressables.forEach { $0.resume() } }

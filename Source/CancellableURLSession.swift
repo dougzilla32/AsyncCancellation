@@ -16,15 +16,16 @@ extension URLSessionTask: Cancellable {
 
 extension CancelToken {
     var urlSessionTasks: [URLSessionTask] { return cancellables() }
-    
+
     func suspendTasks() { urlSessionTasks.forEach { $0.suspend() } }
-    
+
     func resumeTasks() { urlSessionTasks.forEach { $0.resume() } }
 }
 
 /// Add async version of dataTask(with:) which uses suspendAsync to handle the callback
 extension URLSession {
-    func asyncDataTask(with request: URLRequest) /* async */ throws -> (request: URLRequest, response: URLResponse, data: Data) {
+    func asyncDataTask(with request: URLRequest) /* async */ throws
+        -> (request: URLRequest, response: URLResponse, data: Data) {
         return /* await */ try suspendAsync { continuation, error in
             let task = self.dataTask(with: request) { data, response, err in
                 if let err = err {

@@ -17,11 +17,11 @@ public protocol Cancellable {
 /// CancelToken determines a cancellation scope
 public protocol CancelToken {
     func add(cancellable: Cancellable)
-    
+
     func cancellables<T: Cancellable>() -> [T]
 
     func cancel()
-    
+
     var isCancelled: Bool { get }
 }
 
@@ -54,7 +54,7 @@ extension Error {
 public class CancelContext: CancelToken {
     private static let tokenBarrier = DispatchQueue(label: "CancelContext.tokenCounter")
     private static var tokenCounter: UInt = 0
-    
+
     static func nextTokenId() -> UInt {
         var tokenId: UInt!
         CancelContext.tokenBarrier.sync {
@@ -63,30 +63,31 @@ public class CancelContext: CancelToken {
         }
         return tokenId
     }
-    
+
     private struct CancellableItem {
         let cancellable: Cancellable
         let tokenId: UInt
         let error: (Error) -> ()
     }
-    
+
     private struct CancelScope: CancelToken {
         let context: CancelContext
         let tokenId: UInt
         let error: (Error) -> ()
-        
+
         public func add(cancellable: Cancellable) {
-            context.append(item: CancellableItem(cancellable: cancellable, tokenId: tokenId, error: error))
+            context.append(
+                item: CancellableItem(cancellable: cancellable, tokenId: tokenId, error: error))
         }
-        
+
         public func cancellables<T: Cancellable>() -> [T] {
             return context.cancellables(tokenId: tokenId) as [T]
         }
-        
+
         public func cancel() {
             context.cancel(tokenId: tokenId)
         }
-        
+
         public var isCancelled: Bool {
             return context.isCancelled(tokenId: tokenId)
         }
@@ -95,23 +96,23 @@ public class CancelContext: CancelToken {
             return context.makeCancelToken()
         }
     }
-    
+
     private let barrier = DispatchQueue(label: "CancelContext")
     private var cancellableItems = [CancellableItem]()
     private var cancelledEverything = false
     private var cancelledTokenIds = Set<UInt>()
-    
+
     // The cancel scope stack is used to send cancellation errors to the correct invocation
     // of 'suspendAsync' (because 'suspendAsync' supports nested calls).
     private var cancelScopeStack = Stack<CancelScope>()
-    
+
     // Timeout timer
     private var cancelTimer: DispatchWorkItem?
-    
+
     deinit {
         cancelTimer?.cancel()
     }
-    
+
     /// Cancel all unresolved cancellables
     public func cancel() {
         var cancellableItemsCopy: [CancellableItem]!
@@ -124,7 +125,7 @@ public class CancelContext: CancelToken {
             $0.cancellable.cancel()
         }
     }
-    
+
     private func cancel(tokenId: UInt) {
         var cancellableItemsCopy: [CancellableItem]!
         barrier.sync {
@@ -136,7 +137,7 @@ public class CancelContext: CancelToken {
             item.cancellable.cancel()
         }
     }
-    
+
     /// Returns true if all cancellables are either cancelled or resolved
     public var isCancelled: Bool {
         var cancellableItemsCopy: [CancellableItem]!
@@ -148,7 +149,7 @@ public class CancelContext: CancelToken {
         }
         return true
     }
-    
+
     private func isCancelled(tokenId: UInt) -> Bool {
         var cancellableItemsCopy: [CancellableItem]!
         barrier.sync {
@@ -159,7 +160,7 @@ public class CancelContext: CancelToken {
         }
         return true
     }
-    
+
     /// The list of unresolved cancellables conforming to type 'T' for this cancel context
     public func cancellables<T: Cancellable>() -> [T] {
         var cItems: [T] = []
@@ -172,7 +173,7 @@ public class CancelContext: CancelToken {
         }
         return cItems
     }
-    
+
     private func cancellables<T: Cancellable>(tokenId: UInt) -> [T] {
         var cItems: [T] = []
         barrier.sync {
@@ -184,15 +185,18 @@ public class CancelContext: CancelToken {
         }
         return cItems
     }
-    
+
     /// Add a cancellable to the cancel context
     public func add(cancellable: Cancellable) {
         guard let scope = cancelScopeStack.top else {
-            fatalError("'CancelContext.add' may only be called from inside a 'suspendAsync' closure")
+            fatalError(
+                "'CancelContext.add' may only be called from inside a 'suspendAsync' closure")
         }
-        append(item: CancellableItem(cancellable: cancellable, tokenId: scope.tokenId, error: scope.error))
+        append(
+            item: CancellableItem(
+                cancellable: cancellable, tokenId: scope.tokenId, error: scope.error))
     }
-    
+
     private func append(item: CancellableItem) {
         var cancelled = false
         barrier.sync {
@@ -204,7 +208,7 @@ public class CancelContext: CancelToken {
             item.cancellable.cancel()
         }
     }
-    
+
     func removeAll(id: UInt) {
         barrier.sync {
             cancellableItems = cancellableItems.filter { item in
@@ -212,7 +216,7 @@ public class CancelContext: CancelToken {
             }
         }
     }
-    
+
     /// Create a token that can be used to associate a cancellable with this context, and can be used
     /// to cancel or set a timeout on only the token's cancellables (as a subset of the 'CancelContext' cancellables).
     public func makeCancelToken() -> CancelToken {
@@ -221,28 +225,32 @@ public class CancelContext: CancelToken {
             error = cancelScopeStack.top?.error
             if error == nil {
                 if let _: CancelContext = getCoroutineContext() {
-                    fatalError("'makeCancelToken' may only be called from inside a 'suspendAsync' closure")
-                } else {
-                    fatalError("'makeCancelToken' may only be called from inside a 'suspendAsync' closure, which in turn is inside a 'beginAsync' closure that provides a 'CancelContext' coroutine context")
+                    fatalError(
+                        "'makeCancelToken' may only be called from inside a 'suspendAsync' closure")
+                }
+                else {
+                    fatalError(
+                        "'makeCancelToken' may only be called from inside a 'suspendAsync' closure, which in turn is inside a 'beginAsync' closure that provides a 'CancelContext' coroutine context"
+                    )
                 }
             }
         }
         return CancelScope(context: self, tokenId: CancelContext.nextTokenId(), error: error)
     }
-    
+
     func pushCancelScope(id: UInt, error: @escaping (Error) -> ()) {
         barrier.sync {
             cancelScopeStack.push(CancelScope(context: self, tokenId: id, error: error))
         }
     }
-    
+
     func popCancelScope(id: UInt) {
         barrier.sync {
             assert(cancelScopeStack.top?.tokenId == id)
             cancelScopeStack.pop()
         }
     }
-    
+
     /// All associated unresolved cancellables will be cancelled after the given timeout.  Default is no timeout.
     public var timeout: TimeInterval = 0.0 {
         didSet {
@@ -251,13 +259,14 @@ public class CancelContext: CancelToken {
             }
         }
     }
-    
+
     private func resetTimer() {
         cancelTimer?.cancel()
         let timer = DispatchWorkItem {
             self.cancel()
         }
-        DispatchQueue.global(qos: .default).asyncAfter(deadline: DispatchTime.now() + timeout, execute: timer)
+        DispatchQueue.global(qos: .default).asyncAfter(
+            deadline: DispatchTime.now() + timeout, execute: timer)
         cancelTimer = timer
     }
 }

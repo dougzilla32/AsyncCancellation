@@ -22,8 +22,9 @@ public struct CoroutineState {
 
 /// 'getCoroutineState' and 'setCoroutineState' are used to copy the coroutine state to another thread.
 /// This is a workaround for the prototype and would not be necessary in the Swift language implementation.
-public func getCoroutineState()-> CoroutineState {
-    return CoroutineState(asyncContext: tlAsyncContext.inner.value, asyncSemaphore: tlAsyncSemaphore.inner.value)
+public func getCoroutineState() -> CoroutineState {
+    return CoroutineState(
+        asyncContext: tlAsyncContext.inner.value, asyncSemaphore: tlAsyncSemaphore.inner.value)
 }
 
 /// 'getCoroutineState' and 'setCoroutineState' are used to copy the coroutine state to another thread.
@@ -80,20 +81,25 @@ public func getCoroutineContext<T>() -> T? {
  - Parameter asyncContext: the context to use for all encapsulated corotines
  - Parameter error: invoked if 'body' throws an error
  */
-public func beginAsync(context newContext: Any? = nil, error errorHandler: ((Error) -> ())? = nil, _ body: @escaping () throws -> Void) rethrows {
+public func beginAsync(
+    context newContext: Any? = nil, error errorHandler: ((Error) -> ())? = nil,
+    _ body: @escaping () throws -> Void
+) rethrows {
     let beginAsyncSemaphore = DispatchSemaphore(value: 0)
     var bodyError: Error?
     var beginAsyncReturned = false
-    
+
     let outerContext = tlAsyncContext.inner.value
-    
+
     DispatchQueue.global(qos: .default).async {
         // Inherit async contexts from parent 'beginAsync'
         let innerContext: Any?
         if let newContext = newContext, let outerContext = outerContext {
             if newContext as AnyObject === outerContext as AnyObject {
                 innerContext = outerContext
-            } else if var newContexts = newContext as? [Any], let outerContexts = outerContext as? [Any] {
+            } else if var newContexts = newContext as? [Any],
+                let outerContexts = outerContext as? [Any]
+            {
                 newContexts.append(outerContexts)
                 innerContext = newContexts
             } else if var outerContexts = outerContext as? [Any] {
@@ -117,7 +123,7 @@ public func beginAsync(context newContext: Any? = nil, error errorHandler: ((Err
         defer {
             tlAsyncContext.inner.value = nil
         }
-        
+
         // Check for nil and assign to nil before returning, to ensure this works with thread pools
         assert(tlAsyncSemaphore.inner.value == nil)
         tlAsyncSemaphore.inner.value = beginAsyncSemaphore
@@ -125,7 +131,7 @@ public func beginAsync(context newContext: Any? = nil, error errorHandler: ((Err
             beginAsyncSemaphore.signal()
             tlAsyncSemaphore.inner.value = nil
         }
-        
+
         do {
             try body()
         } catch {
@@ -135,15 +141,15 @@ public func beginAsync(context newContext: Any? = nil, error errorHandler: ((Err
             }
         }
     }
-    
+
     beginAsyncSemaphore.wait()
-    
+
     if let error = bodyError {
         // ToDo: Would like to rethrow the body error here but the compiler does not seem to allow for this
         print("beginAsync initial error: \(error)")
         // throw error
     }
-    
+
     beginAsyncReturned = true
 }
 
@@ -158,26 +164,25 @@ public func beginAsync(context newContext: Any? = nil, error errorHandler: ((Err
  */
 public func suspendAsync<T>(
     _ body: @escaping (_ continuation: @escaping (T) -> ()) -> ()
-    ) -> T
-{
+) -> T {
     guard let beginAsyncSemaphore = tlAsyncSemaphore.inner.value else {
         fatalError("suspendAsync must be called within beginAsync")
     }
 
     let suspendAsyncSemaphore = DispatchSemaphore(value: 0)
     var theResult: T?
-    
+
     func continuation(_ result: T) {
         assert(theResult == nil)
         theResult = result
         suspendAsyncSemaphore.signal()
     }
-    
+
     body(continuation)
-    
+
     beginAsyncSemaphore.signal()
     suspendAsyncSemaphore.wait()
-    
+
     return theResult!
 }
 
@@ -206,10 +211,11 @@ public func suspendAsync<T>(
  ```
  */
 public func suspendAsync<T>(
-    _ body: @escaping (_ continuation: @escaping (T) -> (),
-                       _ error: @escaping (Error) -> ()) -> ()
-    ) throws -> T
-{
+    _ body: @escaping (
+        _ continuation: @escaping (T) -> (),
+        _ error: @escaping (Error) -> ()
+    ) -> ()
+) throws -> T {
     guard let beginAsyncSemaphore = tlAsyncSemaphore.inner.value else {
         fatalError("suspendAsync must be called within beginAsync")
     }
@@ -217,7 +223,7 @@ public func suspendAsync<T>(
     let suspendAsyncSemaphore = DispatchSemaphore(value: 0)
     var theResult: T?
     var errorResult: Error?
-    
+
     func isCancelError(_ error: Error?) -> Bool {
         guard let e = error as? AsyncError else {
             return false
@@ -228,14 +234,14 @@ public func suspendAsync<T>(
             return false
         }
     }
-    
+
     let cancelContext: CancelContext? = getCoroutineContext()
     let cancelTokenId: UInt! = cancelContext != nil ? CancelContext.nextTokenId() : nil
-    
+
     func continuation(_ result: T) {
         assert(theResult == nil)
         assert(errorResult == nil || isCancelError(errorResult))
-        
+
         theResult = result
 
         // Remove resolved cancellables from the cancel context and clear the current cancel token
@@ -243,10 +249,10 @@ public func suspendAsync<T>(
 
         suspendAsyncSemaphore.signal()
     }
-    
+
     func error(_ error: Error) {
         assert(theResult == nil || isCancelError(error))
-        
+
         // Allow multiple 'cancel' errors
         if !isCancelError(error) && !isCancelError(errorResult) {
             assert(errorResult == nil)
@@ -264,17 +270,17 @@ public func suspendAsync<T>(
 
         suspendAsyncSemaphore.signal()
     }
-    
+
     cancelContext?.pushCancelScope(id: cancelTokenId, error: error)
     body(continuation, error)
     cancelContext?.popCancelScope(id: cancelTokenId)
 
     beginAsyncSemaphore.signal()
     suspendAsyncSemaphore.wait()
-    
+
     if let errorResult = errorResult {
         throw errorResult
     }
-    
+
     return theResult!
 }

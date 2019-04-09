@@ -175,7 +175,9 @@ public struct DeferredThreadLocal<Value>: Hashable {
 
     /// Returns the result of the closure performed on the inner thread-local
     /// value of `self`, created with `create` if not previously initialized.
-    public func withValue<T>(createdWith create: () throws -> Value, _ body: (inout Value) throws -> T) rethrows -> T {
+    public func withValue<T>(
+        createdWith create: () throws -> Value, _ body: (inout Value) throws -> T
+    ) rethrows -> T {
         return try body(&inner(createdWith: create).value)
     }
 
@@ -200,11 +202,11 @@ extension ThreadLocalRetrievable {
 }
 
 /// Returns a Boolean value that indicates whether the two arguments have equal values.
-public func ==<T, U>(lhs: ThreadLocal<T>, rhs: ThreadLocal<U>) -> Bool {
+public func == <T, U>(lhs: ThreadLocal<T>, rhs: ThreadLocal<U>) -> Bool {
     return lhs._def == rhs._def
 }
 
 /// Returns a Boolean value that indicates whether the two arguments have equal values.
-public func ==<T, U>(lhs: DeferredThreadLocal<T>, rhs: DeferredThreadLocal<U>) -> Bool {
+public func == <T, U>(lhs: DeferredThreadLocal<T>, rhs: DeferredThreadLocal<U>) -> Bool {
     return lhs._key.raw == rhs._key.raw
 }
