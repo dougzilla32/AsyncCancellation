@@ -1,6 +1,6 @@
 ## Async/Await with Cancellation
 
-This is an experimental implementation of the [Proposal to add cancellation abilities for Async/Await](https://forums.swift.org/t/proposal-to-add-cancellation-abilities-for-async-await/18419/12) for the Swift language.
+This is an experimental implementation of the [Proposal to add cancellation abilities for Async/Await](https://forums.swift.org/t/proposal-to-add-cancellation-abilities-for-async-await/18419/13) for the Swift language.
 
 This project demonstrates 'cancellation' and 'timeout' abilities for Async/Await.  The Async/Await feature is described in ['Async/Await for Swift' by Chris Lattner and Joe Groff](https://gist.github.com/lattner/429b9070918248274f25b714dcfc7619) and further discussed in [Contextualizing async coroutines](https://forums.swift.org/t/contextualizing-async-coroutines/6588).  The addition of 'cancellation' and 'timeout' is proposed and discussed below.
 
@@ -11,14 +11,14 @@ To try it out, clone this project and run it!  And run the tests to see if it is
 In this proposal, the cancellation and timeout features are implemented using coroutine contexts:
 
 * A cancel scope (class  `CancelScope`) is used to track cancellable asynchronous tasks within coroutines.
-* Tasks are manually added to the cancel scope as they are created, and are automatically removed from the cancel scope when their associated coroutine is resolved (i.e. the coroutine produces a result or an error).
+* Cancellable tasks are manually added to the cancel scope as they are created, and are automatically removed from the cancel scope when their associated coroutine is resolved (i.e. the coroutine produces a result or an error).
 * The cancel scope has a `cancel()` method that can be used to explicitly cancel all unresolved tasks.
 * When `cancel()` is called on a cancel scope, all of its unresolved coroutines are immediately resolved with the error `AsyncError.cancelled`.  Unwinding and cleanup for the associated task(s) happens in the background after the cancellation error is thrown.
 * The cancel scope is thread safe, therefore the same instance can be used in multiple calls to `beginAsync`
 * The cancel scope can produce subscopes for finer granularity of cancellation and timeouts.
-* The cancel scope has a `timeout: TimeInterval` property for setting a timeout to cancel all unresolved tasks.
+* The cancel scope has a `timeout: TimeInterval` initializer parameter for setting a timeout to cancel all unresolved tasks.
 
-This proposal is influenced by Nathaniel J. Smith blog post ['Timeouts and cancellation for humans'](https://vorpus.org/blog/timeouts-and-cancellation-for-humans/), which mentions Cancel Scopes as a potential solution for timeouts and cancellation.  In this project, the `CancelScope` is analogous to Nathaniel's Cancel Scopes, where the scope is determined by `beginAsync`.  Also, the `CancelScope` can give you `CancelScope`s if you want to manually control the scope.  ToDo: etc etc
+This proposal is influenced by Nathaniel J. Smith's excellent blog post [Timeouts and cancellation for humans](https://vorpus.org/blog/timeouts-and-cancellation-for-humans/), which proposes cancel scopes as a human-friendly way to implement  timeouts and cancellation.  In our case, using a `CancelScope` instance as the  `beginAsync` coroutine context sets up a cancellation scope.
 
 ### Timer example
 
@@ -72,7 +72,7 @@ For 'cancellation' abilities the following changes and additions are proposed an
 
 ```swift
 /**
- 'Cancellable' tasks that conform to this protocol can be added to a
+ 'Cancellable' tasks that conform to this protocol can be used with
  'CancelScope'
  */
 public protocol Cancellable {
@@ -124,9 +124,11 @@ public class CancelScope: Cancellable {
     public func cancellables<T: Cancellable>() -> [T]
 
     /// Create a subscope.  The subscope can be cancelled separately
-    /// from the parent scope. Cancelling the parent scope also cancels
-    /// all of it's subscopes. The 'timeout' parameter specifies a
-    /// timeout in seconds for the cancellation subscope.
+    /// from the parent scope. If the parent scope times out or is
+    /// cancelled, all of it's  subscopes will be cancelled as well.
+    /// The 'timeout' parameter specifies a timeout in seconds for
+    /// the cancellation subscope, to cover the case where a shorter
+    /// timeout than the parent scope is desired.
     public func makeSubscope(timeout: TimeInterval = 0.0) -> CancelScope
 }
 
@@ -371,13 +373,7 @@ The proposal for [Contextualizing async coroutines](https://forums.swift.org/t/c
 * Multiple contexts are combined into an array  `[Any]`
 * Inner contexts take precidence over outer contexts.
 * There is a global function `getCoroutineContext<T>() -> T?`.  If the current coroutine context conforms to `T` then it is returned directly. Otherwise if the context is an `[Any]`, the first member of the array that conforms to `T` is returned.  If there is no match then `nil` is returned.
-* For nested calls to `beginAsync` the outer coroutine context is merged with the new coroutine context to form the inner coroutine context using the following rules:
-    1. If either `outer` or `new` is `nil`, then use the non-nil value
-    2. If `outer` ===  `new`, then it is the same reference so just use `outer`
-    3. If  `outer` and `new` are both `[Any]`, then concatenated `new` and `outer` (`new` comes first)
-    4. If  `outer` is `[Any]`, then prepend `new`  to `outer`
-    5. If `new` is `[Any]`, then append `outer` to `new`
-    6. Concatenate `new` and  `outer` as `[Any]`
+* For nested calls to `beginAsync` the outer coroutine context is merged with the new coroutine context to form the inner coroutine context.
 
 #### Error handling for `beginAsync`
 

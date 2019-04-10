@@ -138,9 +138,12 @@ public class CancelScope: Cancellable {
         return cItems
     }
 
-    /// Create a subscope.  The subscope can be cancelled separately from the parent
-    /// scope. Cancelling the parent scope also cancels all of it's subscopes.
-    /// The 'timeout' parameter specifies a timeout in seconds for the cancellation scope.
+    /// Create a subscope.  The subscope can be cancelled separately
+    /// from the parent scope. If the parent scope times out or is
+    /// cancelled, all of it's  subscopes will be cancelled as well.
+    /// The 'timeout' parameter specifies a timeout in seconds for
+    /// the cancellation subscope, to cover the case where a shorter
+    /// timeout than the parent scope is desired.
     public func makeSubscope(timeout: TimeInterval = 0.0) -> CancelScope {
         var error: ((Error) -> ())!
         barrier.sync {
