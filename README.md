@@ -10,20 +10,22 @@ To try it out, clone this project and run it!  And run the tests to see if it is
 
 In this proposal, the cancellation and timeout features are implemented using coroutine contexts:
 
-* A cancel context (class  `CancelContext`) is used to track cancellable asynchronous tasks within coroutines.
-* Tasks are manually added to the cancel context as they are created, and are automatically removed from the cancel context when their associated coroutine is resolved (i.e. the coroutine produces a result or an error).
-* The cancel context has a `cancel()` method that can be used to explicitly cancel all unresolved tasks.
-* When `cancel()` is called on a cancel context, all of its unresolved coroutines are immediately resolved with the error `AsyncError.cancelled`.  Unwinding and cleanup for the associated task(s) happens in the background after the cancellation error is thrown.
-* The cancel context is thread safe, therefore the same instance can be used in multiple calls to `beginAsync`
-* The cancel context can produce cancel tokens for finer granularity of cancellation and timeouts.
-* The cancel context has a `timeout: TimeInterval` property for setting a timeout to cancel all unresolved tasks.
+* A cancel scope (class  `CancelScope`) is used to track cancellable asynchronous tasks within coroutines.
+* Tasks are manually added to the cancel scope as they are created, and are automatically removed from the cancel scope when their associated coroutine is resolved (i.e. the coroutine produces a result or an error).
+* The cancel scope has a `cancel()` method that can be used to explicitly cancel all unresolved tasks.
+* When `cancel()` is called on a cancel scope, all of its unresolved coroutines are immediately resolved with the error `AsyncError.cancelled`.  Unwinding and cleanup for the associated task(s) happens in the background after the cancellation error is thrown.
+* The cancel scope is thread safe, therefore the same instance can be used in multiple calls to `beginAsync`
+* The cancel scope can produce subscopes for finer granularity of cancellation and timeouts.
+* The cancel scope has a `timeout: TimeInterval` property for setting a timeout to cancel all unresolved tasks.
+
+This proposal is influenced by Nathaniel J. Smith blog post ['Timeouts and cancellation for humans'](https://vorpus.org/blog/timeouts-and-cancellation-for-humans/), which mentions Cancel Scopes as a potential solution for timeouts and cancellation.  In this project, the `CancelScope` is analogous to Nathaniel's Cancel Scopes, where the scope is determined by `beginAsync`.  Also, the `CancelScope` can give you `CancelScope`s if you want to manually control the scope.  ToDo: etc etc
 
 ### Timer example
 
 Here is a simple example using cancellation with async/await:
 
 ```swift
-let cancelContext = CancelContext()
+let cancelScope = CancelScope()
 let error: (Error) -> () = { error in
     if error.isCancelled {
         print("Meaning Of Life calculation cancelled!")
@@ -33,7 +35,7 @@ let error: (Error) -> () = { error in
 }
 
 do {
-    try beginAsync(context: cancelContext, error: error) {
+    try beginAsync(context: cancelScope, error: error) {
         let theMeaningOfLife: Int = await
         suspendAsync { continuation, error in
             let workItem = DispatchWorkItem {
@@ -41,8 +43,8 @@ do {
                 continuation(42)
             }
             DispatchQueue.global().async(execute: workItem)
-            if let cancelToken: CancelToken = getCoroutineContext() {
-                cancelToken.add(cancellable: workItem)
+            if let cancelScope: CancelScope = getCoroutineContext() {
+                cancelScope.add(cancellable: workItem)
             }
         }
         if theMeaningOfLife == 42 {
@@ -56,12 +58,12 @@ do {
 }
 
 // Set a timeout (seconds) to prevent hangs
-cancelContext.timeout = 30.0
+cancelScope.timeout = 30.0
 
 ...
 
 // Call 'cancel' to abort the request
-cancelContext.cancel()
+cancelScope.cancel()
 ```
 
 ### API
@@ -71,33 +73,12 @@ For 'cancellation' abilities the following changes and additions are proposed an
 ```swift
 /**
  'Cancellable' tasks that conform to this protocol can be added to a
- 'CancelContext'
+ 'CancelScope'
  */
 public protocol Cancellable {
     func cancel()
 
     var isCancelled: Bool { get }
-}
-
-/**
- The 'CancelToken' determines a cancellation scope within a
- 'CancelContext'
- */
-public protocol CancelToken {
-    /// Cancel all unresolved cancellables associated with this token
-    func cancel()
-
-    /// Returns true if all cancellables associated with this token
-    /// are either cancelled or resolved
-    var isCancelled: Bool { get }
-
-    /// Add a cancellable to the associated cancel context, marked
-    /// with this token
-    func add(cancellable: Cancellable)
-
-    /// The list of unresolved cancellables conforming to type 'T' and
-    /// marked with this token for the associated cancel context
-    func cancellables<T: Cancellable>() -> [T]
 }
 
 /// Cancellation error
@@ -106,23 +87,28 @@ public enum AsyncError: Error {
 }
 
 /**
- The 'CancelContext' serves to:
+ The 'CancelScope' serves to:
 
  - Track a set of cancellables, providing the ability to cancel the
    set from any thread at any time
 
- - Provides cancel tokens ('CancelToken') for finer grained control
-   over cancellation scope
+ - Provides subscopes for finer grained control over cancellation
+   scope
 
  - Provide the current list of cancellables, allowing extensions of
-   'CancelContext' to invoke other methods by casting
+   'CancelScope' to invoke other methods by casting
 
  - Optionally specify a timeout for its associated cancellables
 
  Note: A cancellable is considered resolved if either its
  'continuation' or its 'error' closure has been invoked.
  */
-public class CancelContext: CancelToken {
+public class CancelScope: Cancellable {
+    /// Create a new `CancelScope` with optional timeout in seconds.
+    /// All associated unresolved tasks will be cancelled after the
+    /// given timeout. Default is no timeout.
+    public init(timeout: TimeInterval = 0.0)
+
     /// Cancel all unresolved cancellables
     public func cancel()
 
@@ -130,21 +116,18 @@ public class CancelContext: CancelToken {
     /// resolved
     public var isCancelled: Bool { get }
 
-    /// Add a cancellable to the cancel context
+    /// Add a cancellable to the cancel scope
     public func add(cancellable: Cancellable)
 
     /// The list of unresolved cancellables conforming to type 'T' for
-    /// this cancel context
+    /// this cancel scope
     public func cancellables<T: Cancellable>() -> [T]
 
-    /// Create a token that can be used to associate a task with this
-    /// context, and can be used to cancel or set a timeout on only
-    /// the token's tasks (as a subset of the CancelContext tasks).
-    public func makeCancelToken() -> CancelToken
-
-    /// All associated unresolved tasks will be cancelled after the
-    /// given timeout. Default is no timeout.
-    public var timeout: TimeInterval
+    /// Create a subscope.  The subscope can be cancelled separately
+    /// from the parent scope. Cancelling the parent scope also cancels
+    /// all of it's subscopes. The 'timeout' parameter specifies a
+    /// timeout in seconds for the cancellation subscope.
+    public func makeSubscope(timeout: TimeInterval = 0.0) -> CancelScope
 }
 
 /**
@@ -192,7 +175,7 @@ public func beginAsync(
  invoked more than once.
 
  - Note: Cancellation is not supported with this flavor of
-   'suspendAsync' and attempts to access the 'cancelToken' will
+   'suspendAsync' and attempts to access the 'CancelScope' will
    trigger a fatal error.
 */
 public func suspendAsync<T>(
@@ -217,9 +200,9 @@ public func suspendAsync<T>(
 
      ...
 
-     // Add 'cancellable' to the 'CancelToken' coroutine context
-     if let cancelToken: CancelToken = getCoroutineContext() {
-       cancelToken.add(cancellable: cancellable)
+     // Add 'cancellable' to the 'CancelScope' coroutine context
+     if let cancelScope: CancelScope = getCoroutineContext() {
+       cancelScope.add(cancellable: cancellable)
      }
  */
 public func suspendAsync<T>(
@@ -241,8 +224,9 @@ extension URLSessionTask: Cancellable {
     }
 }
 
-/// Add suspend and resume capabilities to 'CancelToken'
-extension CancelToken {
+/// Add `URLSessionTask` suspend and resume capabilities to
+/// 'CancelScope'
+extension CancelScope {
     var urlSessionTasks: [URLSessionTask] { return cancellables() }
 
     func suspendTasks() { urlSessionTasks.forEach { $0.suspend() } }
@@ -264,8 +248,8 @@ extension URLSession {
                     continuation((request, response, data))
                 }
             }
-            if let cancelToken: CancelToken = getCoroutineContext() {
-                cancelToken.add(cancellable: task)
+            if let cancelScope: CancelScope = getCoroutineContext() {
+                cancelScope.add(cancellable: task)
             }
             task.resume()
         }
@@ -281,13 +265,13 @@ import Foundation
 
 // Example: how to make a cancellable web request with the
 // URLSession.dataTask coroutine
-let cancelContext = CancelContext()
+let cancelScope = CancelScope()
 let error: (Error) -> () = { error in
     print("Apple search error: \(error)")
 }
 
 do {
-    beginAsync(context: cancelContext, error: error) {
+    beginAsync(context: cancelScope, error: error) {
         let urlSession = URLSession(configuration: .default)
         let request = URLRequest(
             url: URL(string: "https://itunes.apple.com/search")!)
@@ -301,12 +285,12 @@ catch {
 }
 
 // Set a timeout (seconds) to prevent hangs
-cancelContext.timeout = 30.0
+cancelScope.timeout = 30.0
 
 ...
 
 // Call 'cancel' to abort the request
-cancelContext.cancel()
+cancelScope.cancel()
 ```
 
 ### Here is the image loading example from the original Async/Await proposal, along with cancellation and timeout abilities
@@ -328,8 +312,7 @@ func decodeImage(_ profile: Data, _ data: Data) async -> Image
 func dewarpAndCleanupImage(_ image: Image) async -> Image
 
 /// Image loading example
-func processImageData1a()
-async -> Image {
+func processImageData1a() async -> Image {
     let dataResource = Future {
         await loadWebResource("dataprofile.txt")
     }
@@ -347,13 +330,13 @@ async -> Image {
 
 // Execute the image loading example
 let queue = DispatchQueue.global(qos: .default)
-let cancelContext = CancelContext()
+let cancelScope = CancelScope()
 let error: (Error) -> () = { error in
     print("Image loading error: \(error)")
 }
 
 do {
-    try beginAsync(context: [cancelContext, queue], error: error) {
+    try beginAsync(context: [cancelScope, queue], error: error) {
         let result = try processImageData1a()
         print("Image result: \(result)")
     }
@@ -362,12 +345,12 @@ do {
 }
 
 // Set a timeout (seconds) to prevent hangs
-cancelContext.timeout = 30.0
+cancelScope.timeout = 30.0
 
 ...
 
 // Call cancel to abort the request
-cancelContext.cancel()
+cancelScope.cancel()
 ```
 
 ### Prototype Limitations

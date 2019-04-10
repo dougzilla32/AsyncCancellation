@@ -160,7 +160,7 @@ public func beginAsync(
  It is a fatal error for `continuation` to be invoked more than once.
  
  - Note: Cancellation is not supported with this flavor of `suspendAsync`
- and attempts to access the `cancelToken` will trigger a fatal error.
+   and attempts to access the `CancelScope` will trigger a fatal error.
  */
 public func suspendAsync<T>(
     _ body: @escaping (_ continuation: @escaping (T) -> ()) -> ()
@@ -204,9 +204,9 @@ public func suspendAsync<T>(
  
  ...
  
- // Add `cancellable` to the `CancelToken` coroutine context
- if let cancelToken: CancelToken = getCoroutineContext() {
-   cancelToken.add(cancellable: cancellable)
+ // Add `cancellable` to the `CancelScope` coroutine context
+ if let cancelScope: CancelScope = getCoroutineContext() {
+   cancelScope.add(cancellable: cancellable)
  }
  ```
  */
@@ -235,8 +235,7 @@ public func suspendAsync<T>(
         }
     }
 
-    let cancelContext: CancelContext? = getCoroutineContext()
-    let cancelTokenId: UInt! = cancelContext != nil ? CancelContext.nextTokenId() : nil
+    let cancelScope: CancelScope? = getCoroutineContext()
 
     func continuation(_ result: T) {
         assert(theResult == nil)
@@ -244,8 +243,8 @@ public func suspendAsync<T>(
 
         theResult = result
 
-        // Remove resolved cancellables from the cancel context and clear the current cancel token
-        cancelContext?.removeAll(id: cancelTokenId)
+        // Remove resolved cancellables from the cancel scope
+        cancelScope?.removeAll()
 
         suspendAsyncSemaphore.signal()
     }
@@ -259,8 +258,8 @@ public func suspendAsync<T>(
         }
 
         if errorResult == nil {
-            // Remove resolved cancellables from the cancel context and clear the current cancel token
-            cancelContext?.removeAll(id: cancelTokenId)
+            // Remove resolved cancellables from the cancel scope
+            cancelScope?.removeAll()
         }
 
         // Prefer other errors over 'cancel' errors
@@ -271,9 +270,9 @@ public func suspendAsync<T>(
         suspendAsyncSemaphore.signal()
     }
 
-    cancelContext?.pushCancelScope(id: cancelTokenId, error: error)
+    cancelScope?.pushFailureClosure(error: error)
     body(continuation, error)
-    cancelContext?.popCancelScope(id: cancelTokenId)
+    cancelScope?.popFailureClosure()
 
     beginAsyncSemaphore.signal()
     suspendAsyncSemaphore.wait()

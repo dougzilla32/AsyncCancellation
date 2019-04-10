@@ -11,10 +11,8 @@ public enum WebResourceError: Error {
     case invalidResult
 }
 
+/// URLSession example
 func appleRequestExample() {
-    //
-    // URLSession example
-    //
 
     func performAppleSearch() /* async */ throws -> String {
         let urlSession = URLSession(configuration: .default)
@@ -27,13 +25,15 @@ func appleRequestExample() {
     }
 
     // Execute the URLSession example
-    let cancelContext = CancelContext()
+
+    // Set a timeout (seconds) to prevent hangs
+    let cancelScope = CancelScope(timeout: 30.0)
     let appleError: (Error) -> () = { error in
         print("Apple search error: \(error)")
     }
 
     do {
-        try beginAsync(context: cancelContext, error: appleError) {
+        try beginAsync(context: cancelScope, error: appleError) {
             let result = try performAppleSearch()
             print("Apple search result: \(result)")
         }
@@ -42,24 +42,20 @@ func appleRequestExample() {
         // Error is handled by the beginAsync 'error' callback
     }
 
-    /// Set a timeout (seconds) to prevent hangs
-    cancelContext.timeout = 30.0
-
     // Uncomment to see cancellation behavior
-    // cancelContext.cancel()
+    // cancelScope.cancel()
 
     // Uncomment to see suspend behavior
-    // cancelContext.suspendTasks()
+    // cancelScope.suspendTasks()
 }
 
 appleRequestExample()
 
+/***********************************************************************************
+ Image loading example from 'Async/Await for Swift' by Chris Lattner and Joe Groff
+ https://gist.github.com/dougzilla32/ce47a72067f9344742e10020ad4c8c41
+ ***********************************************************************************/
 func imageLoadingExample() {
-    /***********************************************************************************
-     Image loading example from 'Async/Await for Swift' by Chris Lattner and Joe Groff
-     https://gist.github.com/dougzilla32/ce47a72067f9344742e10020ad4c8c41
-     ***********************************************************************************/
-
     /// For the purpose of this example, send a simple web request rather than loading actual image data
     func loadWebResource(_ name: String) throws -> String {
         let urlSession = URLSession(configuration: .default)
@@ -77,8 +73,8 @@ func imageLoadingExample() {
             let task = DispatchWorkItem {
                 continuation("\(profile)+\(data)")
             }
-            if let cancelToken: CancelToken = getCoroutineContext() {
-                cancelToken.add(cancellable: task)
+            if let cancelScope: CancelScope = getCoroutineContext() {
+                cancelScope.add(cancellable: task)
             }
             if let dispatchQueue: DispatchQueue = getCoroutineContext() {
                 dispatchQueue.asyncAfter(deadline: DispatchTime.now() + 0.5, execute: task)
@@ -94,8 +90,8 @@ func imageLoadingExample() {
                 let condensedImage = components.filter { !$0.isEmpty }.joined(separator: " ")
                 continuation(condensedImage)
             }
-            if let cancelToken: CancelToken = getCoroutineContext() {
-                cancelToken.add(cancellable: task)
+            if let cancelScope: CancelScope = getCoroutineContext() {
+                cancelScope.add(cancellable: task)
             }
             if let dispatchQueue: DispatchQueue = getCoroutineContext() {
                 dispatchQueue.asyncAfter(deadline: DispatchTime.now() + 0.5, execute: task)
@@ -115,15 +111,15 @@ func imageLoadingExample() {
         return imageResult
     }
 
-    /// Execute the image loading example
+    // Set a timeout (seconds) to prevent hangs
+    let cancelScope = CancelScope(timeout: 30.0)
     let queue = DispatchQueue.global(qos: .default)
-    let cancelContext = CancelContext()
     let imageError: (Error) -> () = { error in
         print("Image loading error: \(error)")
     }
 
     do {
-        try beginAsync(context: [cancelContext, queue], error: imageError) {
+        try beginAsync(context: [cancelScope, queue], error: imageError) {
             let result = try processImageData1a()
             print("Image result: \(result)")
         }
@@ -131,11 +127,8 @@ func imageLoadingExample() {
         // Error is handled by the beginAsync 'error' callback
     }
 
-    /// Set a timeout (seconds) to prevent hangs
-    cancelContext.timeout = 30.0
-
     // Uncomment to see cancellation behavior
-    // cancelContext.cancel()
+    // cancelScope.cancel()
 }
 
 imageLoadingExample()

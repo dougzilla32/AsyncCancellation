@@ -63,10 +63,10 @@ class CancellationTests: XCTestCase {
     func testURLSessionSuccess() {
         let ex = expectation(description: "")
         let queue = DispatchQueue.global(qos: .default)
-        let cancelContext = CancelContext()
-        beginAsync(context: [queue, cancelContext], appleRequest(ex, shouldSucceed: true))
+        let cancelScope = CancelScope()
+        beginAsync(context: [queue, cancelScope], appleRequest(ex, shouldSucceed: true))
         queue.asyncAfter(deadline: DispatchTime.now() + 5.0) {
-            cancelContext.cancel()
+            cancelScope.cancel()
         }
         waitForExpectations(timeout: 5)
     }
@@ -74,9 +74,9 @@ class CancellationTests: XCTestCase {
     func testURLSessionCancellation() {
         let ex = expectation(description: "")
         let queue = DispatchQueue.global(qos: .default)
-        let cancelContext = CancelContext()
-        beginAsync(context: [queue, cancelContext], appleRequest(ex, shouldSucceed: false))
-        cancelContext.cancel()
+        let cancelScope = CancelScope()
+        beginAsync(context: [queue, cancelScope], appleRequest(ex, shouldSucceed: false))
+        cancelScope.cancel()
         waitForExpectations(timeout: 1)
     }
 
@@ -99,17 +99,17 @@ class CancellationTests: XCTestCase {
         let ex = expectation(description: "")
 
         do {
-            let context = CancelContext()
-            try beginAsync(context: context) {
+            let scope = CancelScope()
+            try beginAsync(context: scope) {
                 let stuff = /* await */ try suspendAsync { continuation, error in
-                    (getCoroutineContext() as CancelToken?)?.add(
+                    (getCoroutineContext() as CancelScope?)?.add(
                         cancellable: getStuff(completion: continuation, error: error))
                 }
                 print("Stuff result: \(stuff)")
                 ex.fulfill()
             }
 
-            context.cancel()
+            scope.cancel()
         } catch {
             print("Stuff error: \(error)")
             XCTFail()
@@ -121,61 +121,73 @@ class CancellationTests: XCTestCase {
     func testNestedBeginAsync() {
         let ex = expectation(description: "")
         let queue = DispatchQueue.global(qos: .default)
-        let cancelContext = CancelContext()
-        beginAsync(context: [queue, cancelContext]) {
+        let cancelScope = CancelScope()
+        beginAsync(context: [queue, cancelScope]) {
             beginAsync(self.appleRequest(ex, shouldSucceed: false))
         }
-        cancelContext.cancel()
+        cancelScope.cancel()
         waitForExpectations(timeout: 1)
     }
 
-    struct TestCancelToken: CancelToken {
-        let token: CancelToken
+    class TestCancelScope: CancelScope {
+        let scope: CancelScope
         let exAdd: XCTestExpectation?
         let exCancel: XCTestExpectation?
         let exIsCancelled: XCTestExpectation?
+        
+        init(timeout: TimeInterval = 0.0,
+                      scope: CancelScope,
+                      exAdd: XCTestExpectation?,
+                      exCancel: XCTestExpectation?,
+                      exIsCancelled: XCTestExpectation?) {
+            self.scope = scope
+            self.exAdd = exAdd
+            self.exCancel = exCancel
+            self.exIsCancelled = exIsCancelled
+            super.init(timeout: timeout)
+        }
 
-        func add(cancellable: Cancellable) {
+        override func add(cancellable: Cancellable) {
             exAdd?.fulfill()
-            token.add(cancellable: cancellable)
+            scope.add(cancellable: cancellable)
         }
 
-        func cancellables<T: Cancellable>() -> [T] {
-            return token.cancellables()
+        override func cancellables<T: Cancellable>() -> [T] {
+            return scope.cancellables()
         }
 
-        func cancel() {
+        override func cancel() {
             exCancel?.fulfill()
-            token.cancel()
+            scope.cancel()
         }
 
-        var isCancelled: Bool {
+        override var isCancelled: Bool {
             exIsCancelled?.fulfill()
-            return token.isCancelled
+            return scope.isCancelled
         }
     }
 
-    func testCancelToken() {
+    func testCancelScope() {
         let exCancel = expectation(description: "cancelled")
-        let exTokenAdd = expectation(description: "token add")
-        let exTokenCancel = expectation(description: "token cancel")
-        let exTokenIsCancelled = expectation(description: "token cancelled")
+        let exScopeAdd = expectation(description: "scope add")
+        let exScopeCancel = expectation(description: "scope cancel")
+        let exScopeIsCancelled = expectation(description: "scope cancelled")
         let queue = DispatchQueue.global(qos: .default)
-        let cancelContext = CancelContext()
+        let cancelScope = CancelScope()
         do {
             try beginAsync(
-                context: [queue, cancelContext],
+                context: [queue, cancelScope],
                 error: { error in
                     error.isCancelled ? exCancel.fulfill() : XCTFail()
                 }
             ) {
                 let result: (request: URLRequest, response: URLResponse, data: Data) = try suspendAsync
                 { continuation, error in
-                    let token = TestCancelToken(
-                        token: cancelContext.makeCancelToken(),
-                        exAdd: exTokenAdd,
-                        exCancel: exTokenCancel,
-                        exIsCancelled: exTokenIsCancelled
+                    let scope = TestCancelScope(
+                        scope: cancelScope.makeSubscope(),
+                        exAdd: exScopeAdd,
+                        exCancel: exScopeCancel,
+                        exIsCancelled: exScopeIsCancelled
                     )
 
                     let session = URLSession(configuration: .default)
@@ -187,11 +199,11 @@ class CancellationTests: XCTestCase {
                             continuation((request, response, data))
                         }
                     }
-                    token.add(cancellable: task)
+                    scope.add(cancellable: task)
                     task.resume()
 
-                    token.cancel()
-                    XCTAssert(token.isCancelled)
+                    scope.cancel()
+                    XCTAssert(scope.isCancelled)
                 }
                 if let resultString = String(
                     data: result.data, encoding: .utf8)?.trimmingCharacters(
@@ -206,18 +218,18 @@ class CancellationTests: XCTestCase {
         } catch {
             error.isCancelled ? exCancel.fulfill() : XCTFail()
         }
-        cancelContext.cancel()
+        cancelScope.cancel()
         waitForExpectations(timeout: 1)
     }
 
-    func testCancelTokenAsContext() {
+    func testCancelScopeAsContext() {
         let exCancel = expectation(description: "cancelled")
-        let exTokenAdd = expectation(description: "token add")
+        let exScopeAdd = expectation(description: "scope add")
         let queue = DispatchQueue.global(qos: .default)
-        let cancelContext = CancelContext()
+        let cancelScope = CancelScope()
         do {
             try beginAsync(
-                context: [queue, cancelContext],
+                context: [queue, cancelScope],
                 error: { error in
                     error.isCancelled ? exCancel.fulfill() : XCTFail()
                 }
@@ -226,9 +238,9 @@ class CancellationTests: XCTestCase {
                     beginAsync(
                         context: [
                             queue,
-                            TestCancelToken(
-                                token: cancelContext.makeCancelToken(),
-                                exAdd: exTokenAdd,
+                            TestCancelScope(
+                                scope: cancelScope.makeSubscope(),
+                                exAdd: exScopeAdd,
                                 exCancel: nil,
                                 exIsCancelled: nil
                             )
@@ -247,36 +259,35 @@ class CancellationTests: XCTestCase {
         } catch {
             error.isCancelled ? exCancel.fulfill() : XCTFail()
         }
-        cancelContext.cancel()
+        cancelScope.cancel()
         waitForExpectations(timeout: 1)
     }
 
     func testTimeout() {
         let ex = expectation(description: "")
         let queue = DispatchQueue.global(qos: .default)
-        let cancelContext = CancelContext()
+        let cancelScope = CancelScope(timeout: 0.25)
         beginAsync(
-            context: [queue, cancelContext], self.appleRequest(ex, shouldSucceed: false, delay: 0.5)
+            context: [queue, cancelScope], self.appleRequest(ex, shouldSucceed: false, delay: 0.5)
         )
-        cancelContext.timeout = 0.25
         waitForExpectations(timeout: 1)
     }
 
     func testTimer() {
         let ex = expectation(description: "")
-        let cancelContext = CancelContext()
+        let cancelScope = CancelScope()
         let error: (Error) -> () = { error in
             XCTFail()
         }
         do {
-            try beginAsync(context: cancelContext, error: error) {
+            try beginAsync(context: cancelScope, error: error) {
                 let theMeaningOfLife: Int = /* await */ try suspendAsync { continuation, error in
                     let workItem = DispatchWorkItem {
                         Thread.sleep(forTimeInterval: 0.1)
                         continuation(42)
                     }
                     DispatchQueue.global().async(execute: workItem)
-                    (getCoroutineContext() as CancelToken?)?.add(cancellable: workItem)
+                    (getCoroutineContext() as CancelScope?)?.add(cancellable: workItem)
                 }
                 if theMeaningOfLife == 42 {
                     ex.fulfill()

@@ -14,8 +14,8 @@ extension URLSessionTask: Cancellable {
     }
 }
 
-/// Add suspend and resume capabilities to `CancelToken`
-extension CancelToken {
+/// Add `URLSessionTask` suspend and resume capabilities to `CancelScope`
+extension CancelScope {
     var tasks: [URLSessionTask] { return cancellables() }
 
     func suspendTasks() { tasks.forEach { $0.suspend() } }
@@ -35,8 +35,8 @@ extension URLSession {
                     continuation((request, response, data))
                 }
             }
-            if let cancelToken: CancelToken = getCoroutineContext() {
-                cancelToken.add(cancellable: task)
+            if let cancelScope: CancelScope = getCoroutineContext() {
+                cancelScope.add(cancellable: task)
             }
             task.resume()
         }

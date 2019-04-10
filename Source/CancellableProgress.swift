@@ -9,7 +9,7 @@ import Foundation
 
 extension Progress: Cancellable {}
 
-extension CancelToken {
+extension CancelScope {
     var progressables: [Progress] { return cancellables() }
 
     func pauseProgress() { progressables.forEach { $0.pause() } }
